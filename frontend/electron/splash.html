@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0f172a;
+    color: #fff;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    user-select: none;
+  }
+  .logo {
+    font-size: 42px;
+    font-weight: 700;
+    color: #38bdf8;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+  }
+  .sub {
+    font-size: 14px;
+    color: #64748b;
+    margin-bottom: 40px;
+  }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid #1e293b;
+    border-top-color: #38bdf8;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 20px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text {
+    font-size: 13px;
+    color: #475569;
+  }
+</style>
+</head>
+<body>
+  <div class="logo">🚿 WashControl</div>
+  <div class="sub">Система управления автомойкой</div>
+  <div class="spinner"></div>
+  <div class="loading-text">Запуск системы...</div>
+</body>
+</html>

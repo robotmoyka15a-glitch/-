@@ -1,0 +1,74 @@
+{
+  "name": "washcontrol",
+  "version": "1.0.0",
+  "description": "Система управления автомойкой",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev":        "concurrently \"vite\" \"electron .\"",
+    "vite":       "vite",
+    "electron":   "electron .",
+    "build":      "vite build",
+    "dist":       "npm run build && electron-builder --win --x64",
+    "preview":    "vite preview"
+  },
+  "dependencies": {
+    "react":            "^18.3.1",
+    "react-dom":        "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "axios":            "^1.7.9",
+    "recharts":         "^2.14.1",
+    "dayjs":            "^1.11.13",
+    "zustand":          "^5.0.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite":                 "^6.0.5",
+    "concurrently":         "^9.1.2",
+    "electron":             "^33.3.1",
+    "electron-builder":     "^25.1.8"
+  },
+  "build": {
+    "appId":       "com.washcontrol.app",
+    "productName": "WashControl",
+    "copyright":   "WashControl 2025",
+    "directories": {
+      "output": "../dist"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from":   "../backend",
+        "to":     "backend",
+        "filter": ["**/*"]
+      },
+      {
+        "from":   "../data",
+        "to":     "data",
+        "filter": ["**/*"]
+      },
+      {
+        "from":   "../requirements.txt",
+        "to":     "requirements.txt"
+      }
+    ],
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ],
+      "icon": "public/icon.ico"
+    },
+    "nsis": {
+      "oneClick":              false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName":          "WashControl",
+      "installerIcon":         "public/icon.ico",
+      "installerHeaderIcon":   "public/icon.ico"
+    }
+  }
+}
