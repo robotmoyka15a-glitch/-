@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import RobotLogo from './RobotLogo'
+import { settingsAPI } from '../api'
 
 // SVG иконки навигации
 function IconHome() {
@@ -128,6 +129,17 @@ export default function Layout() {
   const { user, activeShift, logout } = useStore()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
+
+  // Автоматический онбординг: если admin и Telegram не настроен — показываем мастер
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      settingsAPI.get().then(r => {
+        const cfg = r.data
+        const isEmpty = !cfg.tg_bot_token && !cfg.tg_admin_chat_id
+        if (isEmpty) navigate('/onboarding')
+      }).catch(() => {})
+    }
+  }, [user])
 
   const handleLogout = () => {
     logout()

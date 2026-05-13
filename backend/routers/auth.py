@@ -1,6 +1,8 @@
 """
 WashControl — авторизация
 JWT-токены, логин, получение текущего пользователя
+
+ВАЖНО: get_connection() использует thread-local пул — НЕ вызывать conn.close()!
 """
 
 from datetime import datetime, timedelta
@@ -54,10 +56,10 @@ class PasswordChange(BaseModel):
 def create_token(user_id: int, username: str, role: str) -> str:
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE)
     payload = {
-        "sub": str(user_id),
+        "sub":      str(user_id),
         "username": username,
-        "role": role,
-        "exp": expire,
+        "role":     role,
+        "exp":      expire,
     }
     return jwt.encode(payload, SECRET_KEY, algorithm=JWT_ALGORITHM)
 
@@ -72,14 +74,15 @@ def decode_token(token: str) -> dict:
 
 
 def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
-    """Dependency — возвращает текущего пользователя из JWT."""
+    """Dependency — возвращает текущего пользователя из JWT.
+    НЕ закрывает соединение — thread-local пул управляет им сам."""
     payload = decode_token(token)
     user_id = int(payload["sub"])
     conn = get_connection()
     user = conn.execute(
         "SELECT * FROM users WHERE id = ? AND is_active = 1", (user_id,)
     ).fetchone()
-    conn.close()
+    # conn.close() — УБРАНО: разрушает thread-local пул
     if not user:
         raise HTTPException(status_code=401, detail="Пользователь не найден")
     return dict(user)
@@ -102,7 +105,7 @@ def login(form: OAuth2PasswordRequestForm = Depends()):
         "SELECT * FROM users WHERE username = ? AND is_active = 1",
         (form.username,)
     ).fetchone()
-    conn.close()
+    # НЕ закрываем соединение (thread-local)
 
     if not user or user["password"] != hash_password(form.password):
         raise HTTPException(
@@ -122,7 +125,6 @@ def login(form: OAuth2PasswordRequestForm = Depends()):
 
 @router.get("/me", response_model=UserOut)
 def get_me(current_user: dict = Depends(get_current_user)):
-    """Возвращает данные текущего пользователя."""
     return UserOut(**current_user)
 
 
@@ -131,7 +133,6 @@ def list_users(current_user: dict = Depends(require_admin)):
     """Список всех пользователей — только для admin."""
     conn = get_connection()
     rows = conn.execute("SELECT * FROM users ORDER BY id").fetchall()
-    conn.close()
     return [UserOut(**dict(r)) for r in rows]
 
 
@@ -143,7 +144,6 @@ def create_user(body: UserCreate, current_user: dict = Depends(require_admin)):
         "SELECT id FROM users WHERE username = ?", (body.username,)
     ).fetchone()
     if existing:
-        conn.close()
         raise HTTPException(status_code=400, detail="Имя пользователя уже занято")
 
     cur = conn.execute(
@@ -152,7 +152,6 @@ def create_user(body: UserCreate, current_user: dict = Depends(require_admin)):
     )
     conn.commit()
     user = conn.execute("SELECT * FROM users WHERE id = ?", (cur.lastrowid,)).fetchone()
-    conn.close()
     return UserOut(**dict(user))
 
 
@@ -166,7 +165,6 @@ def toggle_user(user_id: int, current_user: dict = Depends(require_admin)):
         "UPDATE users SET is_active = 1 - is_active WHERE id = ?", (user_id,)
     )
     conn.commit()
-    conn.close()
     return {"ok": True}
 
 
@@ -184,7 +182,6 @@ def change_password(
         (hash_password(body.new_password), current_user["id"])
     )
     conn.commit()
-    conn.close()
     return {"ok": True}
 
 
@@ -197,12 +194,11 @@ def admin_reset_password(
     """Сброс пароля любого пользователя — только admin."""
     new_pw = body.get("new_password", "")
     if len(new_pw) < 4:
-        raise HTTPException(status_code=400, detail="Пароль слишком короткий")
+        raise HTTPException(status_code=400, detail="Пароль слишком короткий (мин 4 символа)")
     conn = get_connection()
     conn.execute(
         "UPDATE users SET password = ? WHERE id = ?",
         (hash_password(new_pw), user_id)
     )
     conn.commit()
-    conn.close()
     return {"ok": True}

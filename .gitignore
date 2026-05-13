@@ -4,7 +4,6 @@ __pycache__/
 *.pyo
 *.pyd
 *.egg-info/
-dist/
 build/
 *.spec
 
@@ -12,12 +11,14 @@ build/
 node_modules/
 frontend/dist/
 frontend/bundled_backend/
+frontend/release/
 
-# Data (не коммитим БД и логи)
+# Data — не коммитим БД, логи, бэкапы, скриншоты
 data/washcontrol.db
 data/logs/
 data/backups/
 data/screenshots/
+data/models/
 
 # Electron build output
 dist/
@@ -26,7 +27,13 @@ dist/
 .vscode/
 .idea/
 *.swp
+*.swo
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# Env
+.env
+.env.local

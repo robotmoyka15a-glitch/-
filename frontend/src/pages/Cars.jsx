@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { carsAPI } from '../api'
 import { useStore } from '../store'
 import dayjs from 'dayjs'
@@ -54,11 +54,18 @@ export default function Cars() {
   const [msg, setMsg]           = useState(null)
   const [showForm, setShowForm] = useState(false)
 
+  const pollRef = useRef(null)
+
   const loadCars = () => {
     carsAPI.today().then(r => setCars(r.data)).catch(() => {})
   }
 
-  useEffect(() => { loadCars() }, [])
+  useEffect(() => {
+    loadCars()
+    // Автообновление каждые 15 сек — актуально когда у оператора открыта эта вкладка
+    pollRef.current = setInterval(loadCars, 15_000)
+    return () => clearInterval(pollRef.current)
+  }, [])
 
   const setField = (field, value) => setForm(f => ({ ...f, [field]: value }))
 
