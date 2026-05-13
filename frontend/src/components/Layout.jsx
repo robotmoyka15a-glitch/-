@@ -1,17 +1,128 @@
 import React, { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
+import RobotLogo from './RobotLogo'
+
+// SVG иконки навигации
+function IconHome() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
+      <path d="M9 21V12h6v9"/>
+    </svg>
+  )
+}
+function IconShift() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <polyline points="12 6 12 12 16 14"/>
+    </svg>
+  )
+}
+function IconCar() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 17H3v-5l2.5-6h13L21 12v5h-2"/>
+      <circle cx="7.5" cy="17.5" r="2.5"/>
+      <circle cx="16.5" cy="17.5" r="2.5"/>
+    </svg>
+  )
+}
+function IconEvents() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="8" y1="6" x2="21" y2="6"/>
+      <line x1="8" y1="12" x2="21" y2="12"/>
+      <line x1="8" y1="18" x2="21" y2="18"/>
+      <line x1="3" y1="6" x2="3.01" y2="6"/>
+      <line x1="3" y1="12" x2="3.01" y2="12"/>
+      <line x1="3" y1="18" x2="3.01" y2="18"/>
+    </svg>
+  )
+}
+function IconReports() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="20" x2="18" y2="10"/>
+      <line x1="12" y1="20" x2="12" y2="4"/>
+      <line x1="6" y1="20" x2="6" y2="14"/>
+    </svg>
+  )
+}
+function IconCamera() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+      <circle cx="12" cy="13" r="4"/>
+    </svg>
+  )
+}
+function IconAI() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="3" width="20" height="14" rx="2"/>
+      <path d="M8 21h8M12 17v4"/>
+      <path d="M9 8h.01M15 8h.01M9 12h6"/>
+    </svg>
+  )
+}
+function IconSettings() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+    </svg>
+  )
+}
+function IconChevronLeft() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="15 18 9 12 15 6"/>
+    </svg>
+  )
+}
+function IconChevronRight() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="9 18 15 12 9 6"/>
+    </svg>
+  )
+}
+function IconLogout() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+      <polyline points="16 17 21 12 16 7"/>
+      <line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+  )
+}
 
 const nav = [
-  { to: '/',        icon: '🏠', label: 'Главная',    roles: ['admin','operator'] },
-  { to: '/shift',   icon: '⏱️', label: 'Смена',      roles: ['admin','operator'] },
-  { to: '/cars',    icon: '🚗', label: 'Машины',     roles: ['admin','operator'] },
-  { to: '/events',  icon: '📋', label: 'События',    roles: ['admin','operator'] },
-  { to: '/reports', icon: '📊', label: 'Отчёты',     roles: ['admin','operator'] },
-  { to: '/cameras', icon: '📷', label: 'Камеры',     roles: ['admin'] },
-  { to: '/ai',      icon: '🤖', label: 'AI-помощник',roles: ['admin','operator'] },
-  { to: '/settings',icon: '⚙️', label: 'Настройки',  roles: ['admin'] },
+  { to: '/',         Icon: IconHome,     label: 'Главная',     roles: ['admin','operator'] },
+  { to: '/shift',    Icon: IconShift,    label: 'Смена',       roles: ['admin','operator'] },
+  { to: '/cars',     Icon: IconCar,      label: 'Машины',      roles: ['admin','operator'] },
+  { to: '/events',   Icon: IconEvents,   label: 'События',     roles: ['admin','operator'] },
+  { to: '/reports',  Icon: IconReports,  label: 'Отчёты',      roles: ['admin','operator'] },
+  { to: '/cameras',  Icon: IconCamera,   label: 'Камеры',      roles: ['admin'] },
+  { to: '/ai',       Icon: IconAI,       label: 'AI-помощник', roles: ['admin','operator'] },
+  { to: '/settings', Icon: IconSettings, label: 'Настройки',   roles: ['admin'] },
 ]
+
+const C = {
+  BRAND_GREEN:      '#22c55e',
+  BRAND_GREEN_DARK: '#16a34a',
+  BRAND_GREEN_DIM:  '#14532d',
+  BG_BASE:          '#0a0f0d',
+  BG_CARD:          '#111827',
+  BG_SIDEBAR:       '#0d1a12',
+  BORDER:           '#1a3a25',
+  TEXT_PRIMARY:     '#f0fdf4',
+  TEXT_SECONDARY:   '#86efac',
+  TEXT_MUTED:       '#4b7a5c',
+  ACCENT_RED:       '#ef4444',
+}
 
 export default function Layout() {
   const { user, activeShift, logout } = useStore()
@@ -28,17 +139,17 @@ export default function Layout() {
   return (
     <div style={styles.root}>
       {/* Боковая панель */}
-      <aside style={{ ...styles.sidebar, width: collapsed ? 64 : 220 }}>
+      <aside style={{ ...styles.sidebar, width: collapsed ? 64 : 224 }}>
         {/* Лого */}
         <div style={styles.sidebarHeader}>
           {!collapsed && (
-            <div style={styles.logo}>
-              <span style={styles.logoIcon}>🚿</span>
-              <span style={styles.logoText}>WashControl</span>
-            </div>
+            <RobotLogo size={32} showText={true} />
           )}
-          <button style={styles.collapseBtn} onClick={() => setCollapsed(!collapsed)}>
-            {collapsed ? '▶' : '◀'}
+          {collapsed && (
+            <RobotLogo size={32} showText={false} />
+          )}
+          <button style={styles.collapseBtn} onClick={() => setCollapsed(!collapsed)} title={collapsed ? 'Развернуть' : 'Свернуть'}>
+            {collapsed ? <IconChevronRight /> : <IconChevronLeft />}
           </button>
         </div>
 
@@ -51,13 +162,20 @@ export default function Layout() {
               end={item.to === '/'}
               style={({ isActive }) => ({
                 ...styles.navItem,
-                background: isActive ? '#1e3a5f' : 'transparent',
-                color: isActive ? '#38bdf8' : '#94a3b8',
-                borderLeft: isActive ? '3px solid #38bdf8' : '3px solid transparent',
+                background: isActive ? C.BRAND_GREEN_DIM : 'transparent',
+                color: isActive ? C.BRAND_GREEN : C.TEXT_MUTED,
+                borderLeft: isActive ? `3px solid ${C.BRAND_GREEN}` : '3px solid transparent',
               })}
+              title={collapsed ? item.label : undefined}
             >
-              <span style={styles.navIcon}>{item.icon}</span>
-              {!collapsed && <span style={styles.navLabel}>{item.label}</span>}
+              {({ isActive }) => (
+                <>
+                  <span style={{ ...styles.navIcon, color: isActive ? C.BRAND_GREEN : C.TEXT_MUTED }}>
+                    <item.Icon />
+                  </span>
+                  {!collapsed && <span style={styles.navLabel}>{item.label}</span>}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -65,21 +183,21 @@ export default function Layout() {
         {/* Пользователь */}
         <div style={styles.sidebarFooter}>
           {activeShift && (
-            <div style={styles.shiftBadge}>
-              {!collapsed && <span>🟢 Смена активна</span>}
-              {collapsed && <span title="Смена активна">🟢</span>}
+            <div style={styles.shiftBadge} title="Смена активна">
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: C.BRAND_GREEN, display: 'inline-block', flexShrink: 0 }} />
+              {!collapsed && <span style={{ fontSize: 12, fontWeight: 600, color: C.BRAND_GREEN }}>Смена активна</span>}
             </div>
           )}
           {!collapsed && (
             <div style={styles.userInfo}>
               <div style={styles.userName}>{user?.full_name}</div>
               <div style={styles.userRole}>
-                {user?.role === 'admin' ? '👑 Администратор' : '👤 Оператор'}
+                {user?.role === 'admin' ? 'Администратор' : 'Оператор'}
               </div>
             </div>
           )}
           <button style={styles.logoutBtn} onClick={handleLogout} title="Выйти">
-            🚪
+            <IconLogout />
           </button>
         </div>
       </aside>
@@ -94,53 +212,66 @@ export default function Layout() {
 
 const styles = {
   root: {
-    display: 'flex', height: '100vh', background: '#0f172a',
-    fontFamily: "'Segoe UI', -apple-system, sans-serif", color: '#e2e8f0',
+    display: 'flex', height: '100vh',
+    background: C.BG_BASE,
+    fontFamily: "'Segoe UI', -apple-system, sans-serif",
+    color: C.TEXT_PRIMARY,
     overflow: 'hidden',
   },
   sidebar: {
-    background: '#0d1b2e', borderRight: '1px solid #1e3a5f',
+    background: C.BG_SIDEBAR,
+    borderRight: `1px solid ${C.BORDER}`,
     display: 'flex', flexDirection: 'column',
     transition: 'width 0.2s ease', flexShrink: 0,
   },
   sidebarHeader: {
-    padding: '16px 12px', borderBottom: '1px solid #1e3a5f',
+    padding: '14px 12px',
+    borderBottom: `1px solid ${C.BORDER}`,
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    minHeight: 64,
+    minHeight: 64, gap: 8,
   },
-  logo: { display: 'flex', alignItems: 'center', gap: 8 },
-  logoIcon: { fontSize: 22 },
-  logoText: { fontWeight: 700, fontSize: 16, color: '#38bdf8', letterSpacing: '-0.3px' },
   collapseBtn: {
-    background: 'none', border: 'none', color: '#475569',
-    cursor: 'pointer', fontSize: 12, padding: 4,
+    background: 'none', border: 'none',
+    color: C.TEXT_MUTED,
+    cursor: 'pointer', padding: 4,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    borderRadius: 6, flexShrink: 0,
   },
   nav: { flex: 1, padding: '8px 0', overflowY: 'auto' },
   navItem: {
     display: 'flex', alignItems: 'center', gap: 10,
     padding: '10px 16px', textDecoration: 'none',
     fontSize: 14, fontWeight: 500, transition: 'all 0.15s',
-    cursor: 'pointer', borderRadius: '0 6px 6px 0', marginRight: 8,
+    cursor: 'pointer',
   },
-  navIcon: { fontSize: 17, width: 22, textAlign: 'center', flexShrink: 0 },
-  navLabel: { whiteSpace: 'nowrap' },
+  navIcon: {
+    width: 22, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
+  },
+  navLabel: { whiteSpace: 'nowrap', overflow: 'hidden' },
   sidebarFooter: {
-    borderTop: '1px solid #1e3a5f', padding: '12px',
+    borderTop: `1px solid ${C.BORDER}`, padding: '12px',
     display: 'flex', flexDirection: 'column', gap: 8,
   },
   shiftBadge: {
-    background: '#052e16', color: '#4ade80',
-    borderRadius: 6, padding: '4px 8px', fontSize: 12, fontWeight: 600,
+    background: C.BRAND_GREEN_DIM,
+    border: `1px solid ${C.BRAND_GREEN}33`,
+    borderRadius: 6, padding: '5px 8px',
+    display: 'flex', alignItems: 'center', gap: 6,
   },
   userInfo: { overflow: 'hidden' },
-  userName: { fontSize: 13, fontWeight: 600, color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis' },
-  userRole: { fontSize: 11, color: '#64748b', marginTop: 2 },
+  userName: {
+    fontSize: 13, fontWeight: 600, color: C.TEXT_PRIMARY,
+    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+  },
+  userRole: { fontSize: 11, color: C.TEXT_MUTED, marginTop: 2 },
   logoutBtn: {
     background: 'none', border: 'none', cursor: 'pointer',
-    fontSize: 18, alignSelf: 'flex-start', padding: 2,
-    opacity: 0.7,
+    color: C.TEXT_MUTED, padding: 4, alignSelf: 'flex-start',
+    display: 'flex', alignItems: 'center',
+    borderRadius: 6,
   },
   main: {
-    flex: 1, overflow: 'auto', background: '#0f172a',
+    flex: 1, overflow: 'auto', background: C.BG_BASE,
   },
 }

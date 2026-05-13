@@ -1,6 +1,6 @@
 /**
  * WashControl — Zustand store
- * Глобальное состояние: пользователь, активная смена, статистика
+ * Глобальное состояние: пользователь, активная смена, статистика, aiProvider
  */
 
 import { create } from 'zustand'
@@ -35,8 +35,13 @@ export const useStore = create((set, get) => ({
     try {
       const res = await shiftsAPI.active()
       set({ activeShift: res.data })
-    } catch {
-      set({ activeShift: null })
+    } catch (err) {
+      // При 401 — выход
+      if (err.response?.status === 401) {
+        get().logout()
+      } else {
+        set({ activeShift: null })
+      }
     } finally {
       set({ shiftLoading: false })
     }
@@ -76,5 +81,14 @@ export const useStore = create((set, get) => ({
     } catch {
       set({ todayCars: [] })
     }
+  },
+
+  // ── AI провайдер ───────────────────────────────────────────────────────────
+  // Читается из localStorage при старте, обновляется при изменении настроек
+  aiProvider: localStorage.getItem('wc_ai_provider') || 'builtin',
+
+  setAiProvider: (provider) => {
+    localStorage.setItem('wc_ai_provider', provider)
+    set({ aiProvider: provider })
   },
 }))
