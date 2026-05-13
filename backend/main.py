@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -24,6 +24,7 @@ from backend.routers import (
     auth, shifts, cars, events, reports,
     cameras, settings_router, ai_router,
 )
+from backend.routers.auth import require_admin
 from backend.services import telegram_bot, scheduler
 
 # ── Логирование ───────────────────────────────────────────────────────────────
@@ -37,6 +38,9 @@ logging.basicConfig(
     ],
 )
 logger = logging.getLogger("washcontrol")
+
+# ── Версия приложения ─────────────────────────────────────────────────────────
+APP_VERSION = "1.0.0"
 
 
 # ── Lifespan (startup/shutdown) ────────────────────────────────────────────────
@@ -79,8 +83,8 @@ async def lifespan(app: FastAPI):
 # ── Приложение ────────────────────────────────────────────────────────────────
 app = FastAPI(
     title="WashControl API",
-    version="1.0.0",
-    description="Система управления автомойкой",
+    version=APP_VERSION,
+    description="Система управления автомойкой «Робот-Мойка»",
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url=None,
@@ -113,12 +117,23 @@ app.include_router(ai_router.router)
 
 
 # ── Системные эндпоинты ───────────────────────────────────────────────────────
+
 @app.get("/", tags=["system"])
 def root():
     return {
         "name":    "WashControl",
-        "version": "1.0.0",
+        "version": APP_VERSION,
         "status":  "running",
+    }
+
+
+@app.get("/api/version", tags=["system"])
+def api_version():
+    """Возвращает текущую версию API/приложения."""
+    return {
+        "version": APP_VERSION,
+        "name":    "WashControl",
+        "brand":   "Робот-Мойка",
     }
 
 
@@ -128,7 +143,6 @@ def health():
     try:
         conn = get_connection()
         conn.execute("SELECT 1").fetchone()
-        conn.close()
         db_ok = True
     except Exception:
         db_ok = False
@@ -142,8 +156,8 @@ def health():
 
 
 @app.post("/notify/test", tags=["system"])
-def test_notify(current_user: dict = None):
-    """Тест уведомлений — только для отладки."""
+def test_notify(current_user: dict = Depends(require_admin)):
+    """Тест уведомлений — только для администраторов."""
     from backend.services.telegram_bot import notify_admin
     from backend.services.vk_notify import notify
     notify_admin("✅ WashControl: тестовое уведомление Telegram")

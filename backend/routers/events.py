@@ -42,15 +42,23 @@ EVENT_TYPE_LABELS = {
 }
 
 
-def _enrich_event(row: dict) -> dict:
+def _enrich_event(row: dict, conn=None) -> dict:
+    """
+    Добавляет full_name к событию.
+    Принимает опциональное соединение conn — если передано, использует его,
+    не открывая новое. Это позволяет избежать лишних соединений при пакетной
+    обработке списков событий.
+    """
     result = dict(row)
-    if row.get("user_id"):
-        conn = get_connection()
-        user = conn.execute(
-            "SELECT full_name FROM users WHERE id = ?", (row["user_id"],)
-        ).fetchone()
-        conn.close()
-        result["full_name"] = user["full_name"] if user else ""
+    if not row.get("user_id"):
+        result.setdefault("full_name", None)
+        return result
+
+    _conn = conn if conn is not None else get_connection()
+    user = _conn.execute(
+        "SELECT full_name FROM users WHERE id = ?", (row["user_id"],)
+    ).fetchone()
+    result["full_name"] = user["full_name"] if user else ""
     return result
 
 
@@ -87,8 +95,8 @@ def get_events(
         f"SELECT * FROM events {where} ORDER BY created_at DESC LIMIT ? OFFSET ?",
         params,
     ).fetchall()
-    conn.close()
-    return [EventOut(**_enrich_event(dict(r))) for r in rows]
+    # Передаём conn в _enrich_event — одно соединение на весь список
+    return [EventOut(**_enrich_event(dict(r), conn=conn)) for r in rows]
 
 
 @router.get("/today", response_model=list[EventOut])
@@ -106,8 +114,8 @@ def get_today_events(current_user: dict = Depends(get_current_user)):
             "SELECT * FROM events WHERE user_id = ? AND created_at >= ? ORDER BY created_at DESC",
             (current_user["id"], today),
         ).fetchall()
-    conn.close()
-    return [EventOut(**_enrich_event(dict(r))) for r in rows]
+    # Передаём conn в _enrich_event — одно соединение на весь список
+    return [EventOut(**_enrich_event(dict(r), conn=conn)) for r in rows]
 
 
 @router.post("/note", response_model=EventOut)
@@ -121,8 +129,7 @@ def add_admin_note(body: AdminNote, current_user: dict = Depends(require_admin))
     )
     conn.commit()
     row = conn.execute("SELECT * FROM events WHERE id = ?", (cur.lastrowid,)).fetchone()
-    conn.close()
-    return EventOut(**_enrich_event(dict(row)))
+    return EventOut(**_enrich_event(dict(row), conn=conn))
 
 
 @router.delete("/{event_id}")
@@ -131,5 +138,4 @@ def delete_event(event_id: int, current_user: dict = Depends(require_admin)):
     conn = get_connection()
     conn.execute("DELETE FROM events WHERE id = ?", (event_id,))
     conn.commit()
-    conn.close()
     return {"ok": True}

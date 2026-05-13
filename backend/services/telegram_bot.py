@@ -17,6 +17,10 @@ _bot_app = None
 _bot_loop: Optional[asyncio.AbstractEventLoop] = None
 _bot_thread: Optional[threading.Thread] = None
 
+# ── Антиспам: время последнего вопроса по chat_id ────────────────────────────
+_last_question_time: dict = {}
+_SPAM_INTERVAL_SEC = 3          # минимум 3 секунды между вопросами
+
 
 # ── Фабрика бота ─────────────────────────────────────────────────────────────
 
@@ -27,6 +31,8 @@ def _build_app(token: str):
     )
 
     app = Application.builder().token(token).build()
+
+    # Англоязычные команды
     app.add_handler(CommandHandler("start",   cmd_start))
     app.add_handler(CommandHandler("help",    cmd_help))
     app.add_handler(CommandHandler("status",  cmd_status))
@@ -34,6 +40,11 @@ def _build_app(token: str):
     app.add_handler(CommandHandler("shift",   cmd_shift))
     app.add_handler(CommandHandler("cars",    cmd_cars))
     app.add_handler(CommandHandler("report",  cmd_report))
+
+    # Русскоязычные алиасы
+    app.add_handler(CommandHandler("сегодня", cmd_today))
+    app.add_handler(CommandHandler("помощь",  cmd_help))
+
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
     return app
 
@@ -46,11 +57,11 @@ async def cmd_start(update, context):
         "Я помогаю следить за автомойкой.\n\n"
         "Команды:\n"
         "/status — текущий статус\n"
-        "/today — итоги сегодняшнего дня\n"
+        "/today (или /сегодня) — итоги сегодняшнего дня\n"
         "/shift — открытые смены\n"
         "/cars — машины за сегодня\n"
         "/report — краткий отчёт\n"
-        "/help — справка",
+        "/help (или /помощь) — справка",
         parse_mode="Markdown"
     )
 
@@ -59,7 +70,7 @@ async def cmd_help(update, context):
     await update.message.reply_text(
         "📋 *Доступные команды:*\n\n"
         "/status — смены и операторы онлайн\n"
-        "/today — сводка за день\n"
+        "/today или /сегодня — сводка за день\n"
         "/shift — детали текущих смен\n"
         "/cars N — последние N машин (по умолчанию 5)\n"
         "/report — полный дневной отчёт\n\n"
@@ -101,7 +112,7 @@ async def cmd_today(update, context):
         conn = get_connection()
         stats = conn.execute(
             """SELECT COUNT(*) as total,
-                      COALESCE(SUM(amount+extra_amount),0) as revenue
+                      COALESCE(SUM(amount+extra_amount), 0) as revenue
                FROM cars c JOIN shifts s ON c.shift_id=s.id WHERE s.date=?""",
             (today,)
         ).fetchone()
@@ -195,7 +206,7 @@ async def cmd_report(update, context):
         conn.close()
 
         mode_lines = ", ".join(
-            f"{WASH_MODES.get(r['wash_mode'],'?')}: {r['cnt']}"
+            f"{WASH_MODES.get(r['wash_mode'], '?')}: {r['cnt']}"
             for r in by_mode
         )
 
@@ -222,10 +233,18 @@ async def cmd_report(update, context):
 
 
 async def handle_text(update, context):
-    """Свободный вопрос — передаём в AI-воркер."""
+    """Свободный вопрос — антиспам + передача в AI-воркер."""
     question = update.message.text.strip()
     if len(question) < 3:
         return
+
+    # ── Антиспам ─────────────────────────────────────────────────────────────
+    chat_id = update.message.chat_id
+    now = datetime.now().timestamp()
+    last_ts = _last_question_time.get(chat_id, 0)
+    if now - last_ts < _SPAM_INTERVAL_SEC:
+        return  # молча игнорируем слишком частые запросы
+    _last_question_time[chat_id] = now
 
     await update.message.reply_text("🤔 Думаю...")
     try:
@@ -233,8 +252,9 @@ async def handle_text(update, context):
         answer = ask_ai_sync(question, source="telegram")
         await update.message.reply_text(f"🤖 {answer}")
     except Exception as e:
+        logger.warning(f"AI ответ не получен: {e}")
         await update.message.reply_text(
-            f"AI недоступен. Попробуйте команды:\n/today /shift /cars /report"
+            "AI недоступен. Попробуйте команды:\n/today /shift /cars /report"
         )
 
 
@@ -243,16 +263,18 @@ async def handle_text(update, context):
 def _run_coro(coro):
     """Безопасно запускает корутину из синхронного кода."""
     global _bot_loop
-    if _bot_loop and _bot_loop.is_running():
+    if _bot_loop is not None and _bot_loop.is_running():
         asyncio.run_coroutine_threadsafe(coro, _bot_loop)
+    else:
+        logger.debug("_run_coro: event loop не активен, сообщение не отправлено")
 
 
 def notify(text: str, parse_mode: str = "Markdown"):
-    """Отправить текстовое уведомление администратору и в группу."""
+    """Отправить уведомление администратору и в группу."""
     from backend.database import get_setting
-    token   = get_setting("tg_bot_token")
-    admin   = get_setting("tg_admin_chat_id")
-    group   = get_setting("tg_group_chat_id")
+    token  = get_setting("tg_bot_token")
+    admin  = get_setting("tg_admin_chat_id")
+    group  = get_setting("tg_group_chat_id")
     if not token:
         return
     for chat_id in filter(None, [admin, group]):
@@ -266,6 +288,15 @@ def notify_admin(text: str):
     chat_id = get_setting("tg_admin_chat_id")
     if token and chat_id:
         _run_coro(_send_message(token, chat_id, text))
+
+
+def notify_group(text: str, parse_mode: str = "Markdown"):
+    """Отправка только в группу."""
+    from backend.database import get_setting
+    token   = get_setting("tg_bot_token")
+    chat_id = get_setting("tg_group_chat_id")
+    if token and chat_id:
+        _run_coro(_send_message(token, chat_id, text, parse_mode))
 
 
 def send_photo_sync(filepath: str, caption: str = ""):
@@ -300,8 +331,17 @@ async def _send_photo(token: str, chat_id: str, filepath: str, caption: str):
 # ── Запуск / остановка бота ───────────────────────────────────────────────────
 
 def start_bot():
-    """Запускает бота в отдельном потоке. Вызывается при старте FastAPI."""
+    """
+    Запускает бота в отдельном потоке.
+    Вызывается при старте FastAPI.
+    Если бот уже запущен — повторный запуск пропускается.
+    """
     global _bot_app, _bot_loop, _bot_thread
+
+    # Защита от повторного запуска
+    if _bot_thread is not None and _bot_thread.is_alive():
+        logger.info("Telegram бот уже запущен, повторный запуск пропущен")
+        return
 
     from backend.database import get_setting
     token = get_setting("tg_bot_token")
@@ -312,7 +352,6 @@ def start_bot():
     def _run():
         global _bot_app, _bot_loop
         try:
-            import telegram
             _bot_loop = asyncio.new_event_loop()
             asyncio.set_event_loop(_bot_loop)
             _bot_app = _build_app(token)

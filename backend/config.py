@@ -19,6 +19,10 @@ AI_MODELS_DIR   = DATA_DIR / "models"
 for d in [DATA_DIR, BACKUP_DIR, LOG_DIR, SCREENSHOTS_DIR, AI_MODELS_DIR]:
     d.mkdir(parents=True, exist_ok=True)
 
+# ── Брендинг ─────────────────────────────────────────────────────────────────
+BRAND_COLOR = "#22c55e"            # зелёный Робот-Мойка
+BRAND_BG    = "#111827"            # тёмный фон
+
 # ── Сервер ────────────────────────────────────────────────────────────────────
 API_HOST    = os.getenv("WASHCONTROL_HOST", "127.0.0.1")
 API_PORT    = int(os.getenv("WASHCONTROL_PORT", "8765"))
