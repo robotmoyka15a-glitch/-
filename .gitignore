@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+*.spec
+
+# Node.js
+node_modules/
+frontend/dist/
+frontend/bundled_backend/
+
+# Data (не коммитим БД и логи)
+data/washcontrol.db
+data/logs/
+data/backups/
+data/screenshots/
+
+# Electron build output
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
