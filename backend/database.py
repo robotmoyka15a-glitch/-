@@ -5,20 +5,41 @@ WashControl — схема базы данных SQLite
 
 import sqlite3
 import hashlib
-import os
+import threading
 from datetime import datetime
 from pathlib import Path
 
 # Путь к файлу базы данных
 DB_PATH = Path(__file__).parent.parent / "data" / "washcontrol.db"
 
+# ── Пул соединений (одно соединение на поток) ─────────────────────────────────
+_local = threading.local()
+
 
 def get_connection() -> sqlite3.Connection:
-    """Возвращает подключение к БД с поддержкой Row как dict."""
+    """
+    Возвращает соединение с БД для текущего потока.
+    Если соединение уже открыто в этом потоке — возвращает его повторно,
+    не создавая новое (thread-local пул).
+    """
+    conn = getattr(_local, "conn", None)
+    # Проверяем, что соединение живо
+    if conn is not None:
+        try:
+            conn.execute("SELECT 1")
+            return conn
+        except Exception:
+            # Соединение умерло — сбрасываем
+            _local.conn = None
+
     conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL")   # лучше для многопоточности
+    conn.execute("PRAGMA journal_mode=WAL")        # лучше для многопоточности
     conn.execute("PRAGMA foreign_keys=ON")
+    conn.execute("PRAGMA cache_size=-8192")        # 8 МБ кэш страниц
+    conn.execute("PRAGMA synchronous=NORMAL")      # быстрее на слабом ПК
+    conn.execute("PRAGMA temp_store=MEMORY")       # временные таблицы в памяти
+    _local.conn = conn
     return conn
 
 
@@ -149,6 +170,14 @@ def init_db():
         "trassir_password":   "",
         "ai_enabled":         "1",
         "ai_model_path":      "",
+        # ── AI провайдер (builtin / ollama / clo) ─────────────────────────────
+        "ai_provider":        "builtin",
+        "ollama_url":         "http://localhost:11434",
+        "ollama_model":       "qwen2.5:3b",
+        "clo_api_key":        "",
+        "clo_api_url":        "https://api.clo.ru/v1/chat/completions",
+        "clo_model":          "gpt-4o-mini",
+        # ── Бэкап ─────────────────────────────────────────────────────────────
         "backup_enabled":     "1",
         "backup_hour":        "3",
         "app_version":        "1.0.0",
@@ -173,7 +202,6 @@ def init_db():
     """, ("operator1", "Оператор 1", op_pw, "operator"))
 
     conn.commit()
-    conn.close()
     print(f"[DB] База данных инициализирована: {DB_PATH}")
 
 
@@ -184,7 +212,6 @@ def get_setting(key: str, default: str = "") -> str:
     row = conn.execute(
         "SELECT value FROM settings WHERE key = ?", (key,)
     ).fetchone()
-    conn.close()
     return row["value"] if row else default
 
 
@@ -194,13 +221,11 @@ def set_setting(key: str, value: str):
         "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, value)
     )
     conn.commit()
-    conn.close()
 
 
 def get_all_settings() -> dict:
     conn = get_connection()
     rows = conn.execute("SELECT key, value FROM settings").fetchall()
-    conn.close()
     return {r["key"]: r["value"] for r in rows}
 
 

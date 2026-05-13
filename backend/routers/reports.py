@@ -75,16 +75,15 @@ def _day_report(target_date: str) -> dict:
 
     late_shifts = [s for s in shifts if s["is_late"]]
 
-    conn.close()
     return {
-        "date":       target_date,
-        "shifts":     [dict(s) for s in shifts],
-        "cars":       [dict(c) for c in cars],
-        "summary":    dict(summary),
-        "by_mode":    [dict(r) for r in by_mode],
-        "by_payment": [dict(r) for r in by_payment],
+        "date":        target_date,
+        "shifts":      [dict(s) for s in shifts],
+        "cars":        [dict(c) for c in cars],
+        "summary":     dict(summary),
+        "by_mode":     [dict(r) for r in by_mode],
+        "by_payment":  [dict(r) for r in by_payment],
         "late_shifts": [dict(s) for s in late_shifts],
-        "mode_names": WASH_MODES,
+        "mode_names":  WASH_MODES,
         "payment_names": PAYMENT_METHODS,
     }
 
@@ -113,7 +112,6 @@ def _range_report(date_from: str, date_to: str) -> dict:
         (date_from, date_to),
     ).fetchall()
 
-    conn.close()
     return {
         "date_from": date_from,
         "date_to":   date_to,
@@ -122,13 +120,12 @@ def _range_report(date_from: str, date_to: str) -> dict:
     }
 
 
-# ── Excel генерация ───────────────────────────────────────────────────────────
-
-HEADER_FILL   = PatternFill("solid", fgColor="1E3A5F")
+# ── Excel стили — цвета бренда «Робот-Мойка» (зелёные) ───────────────────────
+HEADER_FILL   = PatternFill("solid", fgColor="14532D")   # тёмно-зелёный (было 1E3A5F)
 HEADER_FONT   = Font(color="FFFFFF", bold=True, size=10)
-SUBHEAD_FILL  = PatternFill("solid", fgColor="2D6A9F")
+SUBHEAD_FILL  = PatternFill("solid", fgColor="166534")   # зелёный (было 2D6A9F)
 SUBHEAD_FONT  = Font(color="FFFFFF", bold=True, size=9)
-EVEN_FILL     = PatternFill("solid", fgColor="EEF4FB")
+EVEN_FILL     = PatternFill("solid", fgColor="F0FDF4")   # очень светло-зелёный фон строк
 BORDER        = Border(
     left=Side(style="thin", color="CCCCCC"),
     right=Side(style="thin", color="CCCCCC"),
@@ -137,6 +134,9 @@ BORDER        = Border(
 )
 CENTER = Alignment(horizontal="center", vertical="center")
 LEFT   = Alignment(horizontal="left",   vertical="center")
+
+# Цвет заголовка документа
+TITLE_COLOR = "14532D"
 
 
 def _set_header(ws, row, cols):
@@ -151,12 +151,15 @@ def _set_header(ws, row, cols):
 def _build_excel(report: dict) -> BytesIO:
     wb = openpyxl.Workbook()
     ws_main = wb.active
-    ws_main.title = "Журнал машин"
+    # Логотип в заголовке листа
+    ws_main.title = "Робот-Мойка — Журнал"
 
     # ── Лист 1: журнал машин ─────────────────────────────────────────────────
-    title_cell = ws_main.cell(row=1, column=1,
-        value=f"WashControl — Отчёт за {report['date']}")
-    title_cell.font = Font(bold=True, size=14, color="1E3A5F")
+    title_cell = ws_main.cell(
+        row=1, column=1,
+        value=f"Робот-Мойка (WashControl) — Отчёт за {report['date']}"
+    )
+    title_cell.font = Font(bold=True, size=14, color=TITLE_COLOR)
     ws_main.merge_cells("A1:L1")
     title_cell.alignment = CENTER
 
@@ -201,7 +204,7 @@ def _build_excel(report: dict) -> BytesIO:
         ws_main.column_dimensions[get_column_letter(c)].width = w
 
     # ── Лист 2: сводка ────────────────────────────────────────────────────────
-    ws_sum = wb.create_sheet("Сводка")
+    ws_sum = wb.create_sheet("Робот-Мойка — Сводка")
     s = report["summary"]
 
     summary_rows = [
@@ -215,8 +218,11 @@ def _build_excel(report: dict) -> BytesIO:
     ws_sum.column_dimensions["A"].width = 24
     ws_sum.column_dimensions["B"].width = 20
 
-    ws_sum.cell(row=1, column=1, value=f"Сводка за {report['date']}").font = \
-        Font(bold=True, size=13, color="1E3A5F")
+    title_sum = ws_sum.cell(
+        row=1, column=1,
+        value=f"Робот-Мойка — Сводка за {report['date']}"
+    )
+    title_sum.font = Font(bold=True, size=13, color=TITLE_COLOR)
 
     for r, (label, val) in enumerate(summary_rows, 3):
         ws_sum.cell(row=r, column=1, value=label).font = Font(bold=True)
@@ -268,7 +274,7 @@ def day_report_excel(
     d = target_date or date.today().isoformat()
     report = _day_report(d)
     buf = _build_excel(report)
-    filename = f"washcontrol_{d}.xlsx"
+    filename = f"robot_moika_{d}.xlsx"
     return StreamingResponse(
         buf,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -320,14 +326,16 @@ def range_report_excel(
     current_user: dict = Depends(get_current_user),
 ):
     """Excel за произвольный период (склеивает дни)."""
-    from io import BytesIO
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = "Период"
+    ws.title = "Робот-Мойка — Период"
     data = _range_report(date_from, date_to)
 
-    ws.cell(row=1, column=1,
-        value=f"WashControl {date_from} — {date_to}").font = Font(bold=True, size=13)
+    title_cell = ws.cell(
+        row=1, column=1,
+        value=f"Робот-Мойка (WashControl) {date_from} — {date_to}"
+    )
+    title_cell.font = Font(bold=True, size=13, color=TITLE_COLOR)
     _set_header(ws, 3, ["Дата", "Машин", "Выручка (₽)"])
     for i, row in enumerate(data["daily"], 4):
         ws.cell(row=i, column=1, value=row["date"])
@@ -340,7 +348,7 @@ def range_report_excel(
     buf = BytesIO()
     wb.save(buf)
     buf.seek(0)
-    filename = f"washcontrol_{date_from}_{date_to}.xlsx"
+    filename = f"robot_moika_{date_from}_{date_to}.xlsx"
     return StreamingResponse(
         buf,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

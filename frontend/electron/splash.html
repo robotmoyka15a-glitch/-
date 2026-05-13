@@ -14,18 +14,19 @@
     justify-content: center;
     height: 100vh;
     user-select: none;
+    overflow: hidden;
   }
   .logo {
     font-size: 42px;
     font-weight: 700;
     color: #38bdf8;
     letter-spacing: -1px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
   .sub {
     font-size: 14px;
     color: #64748b;
-    margin-bottom: 40px;
+    margin-bottom: 36px;
   }
   .spinner {
     width: 36px; height: 36px;
@@ -36,9 +37,33 @@
     margin-bottom: 20px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  .progress-wrap {
+    width: 260px;
+    background: #1e293b;
+    border-radius: 6px;
+    overflow: hidden;
+    height: 6px;
+    margin-bottom: 14px;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #0ea5e9, #38bdf8);
+    border-radius: 6px;
+    transition: width 0.9s ease;
+    width: 0%;
+  }
+
   .loading-text {
     font-size: 13px;
     color: #475569;
+    min-height: 18px;
+    transition: opacity 0.3s;
+  }
+  .counter {
+    font-size: 11px;
+    color: #334155;
+    margin-top: 8px;
   }
 </style>
 </head>
@@ -46,6 +71,27 @@
   <div class="logo">🚿 WashControl</div>
   <div class="sub">Система управления автомойкой</div>
   <div class="spinner"></div>
-  <div class="loading-text">Запуск системы...</div>
+  <div class="progress-wrap">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+  <div class="loading-text" id="loadingText">Запуск системы...</div>
+  <div class="counter" id="counter"></div>
+
+  <script>
+    function updateProgress(elapsed, maxAttempts, dots) {
+      const pct = Math.min((elapsed / maxAttempts) * 100, 99)
+      document.getElementById('progressBar').style.width = pct + '%'
+
+      let msg = 'Запуск системы' + (dots || '.')
+      if (elapsed >= 5)  msg = 'Загружаем зависимости' + (dots || '.')
+      if (elapsed >= 15) msg = 'Инициализация базы данных' + (dots || '.')
+      if (elapsed >= 25) msg = 'Запускаем API сервер' + (dots || '.')
+      if (elapsed >= 40) msg = 'Ожидание готовности' + (dots || '.')
+      document.getElementById('loadingText').textContent = msg
+
+      document.getElementById('counter').textContent =
+        `${elapsed} / ${maxAttempts} сек`
+    }
+  </script>
 </body>
 </html>

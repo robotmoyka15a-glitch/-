@@ -7,7 +7,7 @@ WashControl — планировщик фоновых задач
 import logging
 import shutil
 import threading
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from pathlib import Path
 
 logger = logging.getLogger("washcontrol.scheduler")
@@ -22,13 +22,12 @@ def _daily_report_job():
         from backend.services.telegram_bot import notify_admin
         from backend.services.vk_notify import send_daily_report
         from backend.database import get_connection
-        from backend.config import WASH_MODES, PAYMENT_METHODS
 
         today = date.today().isoformat()
         conn = get_connection()
         stats = conn.execute(
             """SELECT COUNT(*) as cars,
-                      COALESCE(SUM(amount+extra_amount),0) as revenue
+                      COALESCE(SUM(amount+extra_amount), 0) as revenue
                FROM cars c JOIN shifts s ON c.shift_id=s.id WHERE s.date=?""",
             (today,)
         ).fetchone()
@@ -59,7 +58,6 @@ def _backup_job():
         logger.info(f"Бэкап создан: {dst.name}")
 
         # Удалить старые бэкапы
-        import os
         cutoff = datetime.now().timestamp() - BACKUP_KEEP_DAYS * 86400
         for f in BACKUP_DIR.glob("*.db"):
             if f.stat().st_mtime < cutoff:
@@ -70,7 +68,14 @@ def _backup_job():
 
 
 def _check_late_shift():
-    """Проверяет смены на опоздание и уведомляет."""
+    """
+    Проверяет, не опоздал ли оператор на смену.
+
+    Логика:
+      expected_time  = сегодня 08:00 (или shift_start_time из настроек)
+      check_after    = expected_time + timedelta(minutes=threshold)
+      Если сейчас > check_after — проверяем, есть ли открытая смена.
+    """
     try:
         from backend.database import get_connection, get_setting
         from backend.services.telegram_bot import notify_admin
@@ -81,22 +86,20 @@ def _check_late_shift():
         today      = date.today().isoformat()
         now        = datetime.now()
 
+        # Корректный расчёт через timedelta
+        hour, minute = map(int, start_time.split(":"))
+        expected_time = now.replace(
+            hour=hour, minute=minute, second=0, microsecond=0
+        )
+        check_after = expected_time + timedelta(minutes=threshold)
+
+        if now <= check_after:
+            return  # ещё не время проверять опоздания
+
         conn = get_connection()
-        # Ищем пользователей без открытой смены после порогового времени
         users = conn.execute(
             "SELECT * FROM users WHERE role='operator' AND is_active=1"
         ).fetchall()
-
-        hour, minute = map(int, start_time.split(":"))
-        expected = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
-        late_check_time = expected.replace(minute=minute + threshold
-                                           if minute + threshold < 60
-                                           else minute + threshold - 60,
-                                           hour=hour + (1 if minute + threshold >= 60 else 0))
-
-        if now < late_check_time:
-            conn.close()
-            return  # ещё не время проверять
 
         for user in users:
             has_shift = conn.execute(
@@ -110,7 +113,10 @@ def _check_late_shift():
             ).fetchone()
 
             if not has_shift and not already_notified:
-                msg = f"⚠️ {user['full_name']} не открыл смену! (>{threshold} мин опоздания)"
+                msg = (
+                    f"⚠️ {user['full_name']} не открыл смену! "
+                    f"(>{threshold} мин после {start_time})"
+                )
                 notify_admin(msg)
                 send_late_alert(user["full_name"], threshold)
                 conn.execute(

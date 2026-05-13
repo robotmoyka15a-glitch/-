@@ -3,17 +3,19 @@ WashControl — роутер смен
 Открытие/закрытие смены, история, опоздания
 """
 
+import logging
 from datetime import datetime, date
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from backend.database import get_connection
-from backend.config import DEFAULT_SHIFT_START, LATE_THRESHOLD_MIN
+from backend.database import get_connection, get_setting
+from backend.config import DEFAULT_SHIFT_START
 from backend.routers.auth import get_current_user, require_admin
 
 router = APIRouter(prefix="/shifts", tags=["shifts"])
+logger = logging.getLogger("washcontrol.shifts")
 
 
 # ── Pydantic схемы ────────────────────────────────────────────────────────────
@@ -40,13 +42,17 @@ class ShiftNote(BaseModel):
 # ── Утилиты ───────────────────────────────────────────────────────────────────
 
 def _calc_late(started_at_str: str, shift_start: str) -> tuple[int, int]:
-    """Возвращает (is_late: 0|1, late_minutes: int)."""
+    """
+    Возвращает (is_late: 0|1, late_minutes: int).
+    Порог опоздания читается из БД через get_setting().
+    """
     try:
+        threshold = int(get_setting("late_threshold_min", "15"))
         started = datetime.fromisoformat(started_at_str)
         today = started.date().isoformat()
         expected = datetime.fromisoformat(f"{today}T{shift_start}:00")
         diff = int((started - expected).total_seconds() / 60)
-        if diff >= LATE_THRESHOLD_MIN:
+        if diff >= threshold:
             return 1, diff
         return 0, max(0, diff)
     except Exception:
@@ -54,23 +60,36 @@ def _calc_late(started_at_str: str, shift_start: str) -> tuple[int, int]:
 
 
 def _enrich(row: dict) -> dict:
-    """Добавляет username, full_name, car_count, total_amount к смене."""
+    """
+    Добавляет username, full_name, car_count, total_amount к смене.
+    Использует один JOIN-запрос вместо нескольких отдельных.
+    """
     conn = get_connection()
-    user = conn.execute(
-        "SELECT username, full_name FROM users WHERE id = ?", (row["user_id"],)
+    enriched = conn.execute(
+        """SELECT
+               u.username,
+               u.full_name,
+               COUNT(c.id)                                  AS car_count,
+               COALESCE(SUM(c.amount + c.extra_amount), 0)  AS total_amount
+           FROM shifts s
+           JOIN users u ON u.id = s.user_id
+           LEFT JOIN cars c ON c.shift_id = s.id
+           WHERE s.id = ?
+           GROUP BY s.id""",
+        (row["id"],),
     ).fetchone()
-    stats = conn.execute(
-        "SELECT COUNT(*) as cnt, COALESCE(SUM(amount + extra_amount),0) as total "
-        "FROM cars WHERE shift_id = ?",
-        (row["id"],)
-    ).fetchone()
-    conn.close()
+
     result = dict(row)
-    if user:
-        result["username"]  = user["username"]
-        result["full_name"] = user["full_name"]
-    result["car_count"]    = stats["cnt"] if stats else 0
-    result["total_amount"] = stats["total"] if stats else 0.0
+    if enriched:
+        result["username"]     = enriched["username"]
+        result["full_name"]    = enriched["full_name"]
+        result["car_count"]    = enriched["car_count"]
+        result["total_amount"] = enriched["total_amount"]
+    else:
+        result.setdefault("username", None)
+        result.setdefault("full_name", None)
+        result.setdefault("car_count", 0)
+        result.setdefault("total_amount", 0.0)
     return result
 
 
@@ -91,14 +110,15 @@ def start_shift(
         (current_user["id"], today)
     ).fetchone()
     if existing:
-        conn.close()
         raise HTTPException(status_code=400, detail="Смена уже открыта")
 
     now_str = datetime.now().isoformat(timespec="seconds")
-    shift_start = conn.execute(
+
+    # Читаем время начала смены из БД
+    shift_start_row = conn.execute(
         "SELECT value FROM settings WHERE key = 'shift_start_time'"
     ).fetchone()
-    start_time = shift_start["value"] if shift_start else DEFAULT_SHIFT_START
+    start_time = shift_start_row["value"] if shift_start_row else DEFAULT_SHIFT_START
 
     is_late, late_min = _calc_late(now_str, start_time)
 
@@ -121,8 +141,27 @@ def start_shift(
     conn.commit()
 
     row = conn.execute("SELECT * FROM shifts WHERE id = ?", (shift_id,)).fetchone()
-    conn.close()
-    return ShiftOut(**_enrich(dict(row)))
+    result = ShiftOut(**_enrich(dict(row)))
+
+    # ── Уведомления (telegram + vk) ──────────────────────────────────────────
+    msg = (
+        f"🟢 Смена открыта\n"
+        f"Оператор: {current_user['full_name']}\n"
+        f"Время: {now_str}{late_text}"
+    )
+    try:
+        from backend.services.telegram_bot import notify_admin
+        notify_admin(msg)
+    except Exception as e:
+        logger.warning(f"Telegram уведомление не отправлено: {e}")
+
+    try:
+        from backend.services.vk_notify import notify
+        notify(msg)
+    except Exception as e:
+        logger.warning(f"VK уведомление не отправлено: {e}")
+
+    return result
 
 
 @router.post("/end", response_model=ShiftOut)
@@ -139,7 +178,6 @@ def end_shift(
         (current_user["id"], today)
     ).fetchone()
     if not shift:
-        conn.close()
         raise HTTPException(status_code=404, detail="Открытая смена не найдена")
 
     now_str = datetime.now().isoformat(timespec="seconds")
@@ -156,7 +194,6 @@ def end_shift(
     )
     conn.commit()
     row = conn.execute("SELECT * FROM shifts WHERE id = ?", (shift["id"],)).fetchone()
-    conn.close()
     return ShiftOut(**_enrich(dict(row)))
 
 
@@ -169,7 +206,6 @@ def get_active_shift(current_user: dict = Depends(get_current_user)):
         "SELECT * FROM shifts WHERE user_id = ? AND date = ? AND ended_at IS NULL",
         (current_user["id"], today)
     ).fetchone()
-    conn.close()
     if not row:
         return None
     return ShiftOut(**_enrich(dict(row)))
@@ -189,7 +225,6 @@ def get_today_shifts(current_user: dict = Depends(get_current_user)):
             "SELECT * FROM shifts WHERE user_id = ? AND date = ? ORDER BY started_at DESC",
             (current_user["id"], today)
         ).fetchall()
-    conn.close()
     return [ShiftOut(**_enrich(dict(r))) for r in rows]
 
 
@@ -223,7 +258,6 @@ def get_shift_history(
         f"SELECT * FROM shifts s {where} ORDER BY s.started_at DESC LIMIT ? OFFSET ?",
         params
     ).fetchall()
-    conn.close()
     return [ShiftOut(**_enrich(dict(r))) for r in rows]
 
 
@@ -231,7 +265,6 @@ def get_shift_history(
 def get_shift(shift_id: int, current_user: dict = Depends(get_current_user)):
     conn = get_connection()
     row = conn.execute("SELECT * FROM shifts WHERE id = ?", (shift_id,)).fetchone()
-    conn.close()
     if not row:
         raise HTTPException(status_code=404, detail="Смена не найдена")
     if current_user["role"] != "admin" and row["user_id"] != current_user["id"]:

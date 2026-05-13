@@ -3,6 +3,7 @@ WashControl — роутер журнала машин
 Добавление, просмотр, редактирование записей о помытых машинах
 """
 
+import logging
 from datetime import datetime, date
 from typing import Optional
 
@@ -14,6 +15,7 @@ from backend.config import WASH_MODES, PAYMENT_METHODS
 from backend.routers.auth import get_current_user, require_admin
 
 router = APIRouter(prefix="/cars", tags=["cars"])
+logger = logging.getLogger("washcontrol.cars")
 
 
 # ── Pydantic схемы ────────────────────────────────────────────────────────────
@@ -67,22 +69,32 @@ class CarUpdate(BaseModel):
 # ── Утилиты ───────────────────────────────────────────────────────────────────
 
 def _enrich_car(row: dict) -> dict:
+    """
+    Добавляет full_name, wash_mode_name, payment_method_name, car_number.
+    Использует один JOIN-запрос вместо нескольких отдельных.
+    """
     conn = get_connection()
-    user = conn.execute(
-        "SELECT full_name FROM users WHERE id = ?", (row["user_id"],)
+    enriched = conn.execute(
+        """SELECT
+               u.full_name,
+               (SELECT COUNT(*) FROM cars c2
+                WHERE c2.shift_id = c.shift_id AND c2.id <= c.id) AS car_number
+           FROM cars c
+           JOIN users u ON u.id = c.user_id
+           WHERE c.id = ?""",
+        (row["id"],),
     ).fetchone()
-    # Порядковый номер машины в смене
-    num = conn.execute(
-        "SELECT COUNT(*) as n FROM cars WHERE shift_id = ? AND id <= ?",
-        (row["shift_id"], row["id"])
-    ).fetchone()
-    conn.close()
 
     result = dict(row)
-    result["full_name"]           = user["full_name"] if user else ""
+    if enriched:
+        result["full_name"]  = enriched["full_name"]
+        result["car_number"] = enriched["car_number"]
+    else:
+        result.setdefault("full_name", "")
+        result.setdefault("car_number", 0)
+
     result["wash_mode_name"]      = WASH_MODES.get(row["wash_mode"], "?")
     result["payment_method_name"] = PAYMENT_METHODS.get(row["payment_method"], "?")
-    result["car_number"]          = num["n"] if num else 0
     return result
 
 
@@ -94,7 +106,6 @@ def _get_active_shift(user_id: int):
         "SELECT * FROM shifts WHERE user_id = ? AND date = ? AND ended_at IS NULL",
         (user_id, today)
     ).fetchone()
-    conn.close()
     return dict(row) if row else None
 
 
@@ -152,9 +163,30 @@ def add_car(body: CarCreate, current_user: dict = Depends(get_current_user)):
         )
     )
     conn.commit()
+
     row = conn.execute("SELECT * FROM cars WHERE id = ?", (car_id,)).fetchone()
-    conn.close()
-    return CarOut(**_enrich_car(dict(row)))
+    result = CarOut(**_enrich_car(dict(row)))
+
+    # ── Уведомления (telegram + vk) ──────────────────────────────────────────
+    msg = (
+        f"🚗 Новая машина #{car_num}\n"
+        f"Оператор: {current_user['full_name']}\n"
+        f"Режим: {mode_name} | Оплата: {pay_name} {body.amount}₽"
+        f"{extra_txt}{wiped_txt}"
+    )
+    try:
+        from backend.services.telegram_bot import notify_admin
+        notify_admin(msg)
+    except Exception as e:
+        logger.warning(f"Telegram уведомление не отправлено: {e}")
+
+    try:
+        from backend.services.vk_notify import notify
+        notify(msg)
+    except Exception as e:
+        logger.warning(f"VK уведомление не отправлено: {e}")
+
+    return result
 
 
 @router.get("/today", response_model=list[CarOut])
@@ -176,7 +208,6 @@ def get_today_cars(current_user: dict = Depends(get_current_user)):
                WHERE s.date = ? AND s.user_id = ? ORDER BY c.arrived_at""",
             (today, current_user["id"])
         ).fetchall()
-    conn.close()
     return [CarOut(**_enrich_car(dict(r))) for r in rows]
 
 
@@ -186,17 +217,14 @@ def get_cars_by_shift(shift_id: int, current_user: dict = Depends(get_current_us
     conn = get_connection()
     shift = conn.execute("SELECT * FROM shifts WHERE id = ?", (shift_id,)).fetchone()
     if not shift:
-        conn.close()
         raise HTTPException(status_code=404, detail="Смена не найдена")
     if current_user["role"] != "admin" and shift["user_id"] != current_user["id"]:
-        conn.close()
         raise HTTPException(status_code=403, detail="Доступ запрещён")
 
     rows = conn.execute(
         "SELECT * FROM cars WHERE shift_id = ? ORDER BY arrived_at",
         (shift_id,)
     ).fetchall()
-    conn.close()
     return [CarOut(**_enrich_car(dict(r))) for r in rows]
 
 
@@ -210,10 +238,8 @@ def update_car(
     conn = get_connection()
     car = conn.execute("SELECT * FROM cars WHERE id = ?", (car_id,)).fetchone()
     if not car:
-        conn.close()
         raise HTTPException(status_code=404, detail="Запись не найдена")
     if current_user["role"] != "admin" and car["user_id"] != current_user["id"]:
-        conn.close()
         raise HTTPException(status_code=403, detail="Доступ запрещён")
 
     fields = {k: v for k, v in body.model_dump().items() if v is not None}
@@ -226,7 +252,6 @@ def update_car(
         conn.commit()
 
     row = conn.execute("SELECT * FROM cars WHERE id = ?", (car_id,)).fetchone()
-    conn.close()
     return CarOut(**_enrich_car(dict(row)))
 
 
@@ -236,7 +261,6 @@ def delete_car(car_id: int, current_user: dict = Depends(require_admin)):
     conn = get_connection()
     conn.execute("DELETE FROM cars WHERE id = ?", (car_id,))
     conn.commit()
-    conn.close()
     return {"ok": True}
 
 
@@ -279,7 +303,6 @@ def today_stats(current_user: dict = Depends(get_current_user)):
         (today,)
     ).fetchall()
 
-    conn.close()
     return {
         "summary":    dict(stats),
         "by_mode":    [dict(r) for r in by_mode],
