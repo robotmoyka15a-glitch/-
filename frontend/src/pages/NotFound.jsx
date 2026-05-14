@@ -27,21 +27,21 @@ export default function NotFound() {
 
 const s = {
   page: {
-    minHeight: '100vh', background: '#0a0f0d',
+    minHeight: '100vh', background: '#0f172a',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontFamily: "'Segoe UI', sans-serif",
   },
   card: {
-    background: '#111827', border: '1px solid #1a3a25',
+    background: '#1e293b', border: '1px solid #1a3a25',
     borderRadius: 16, padding: '48px 40px', maxWidth: 380,
     display: 'flex', flexDirection: 'column', alignItems: 'center',
     boxShadow: '0 0 40px rgba(34,197,94,0.06)',
   },
-  code:  { fontSize: 72, fontWeight: 900, color: '#22c55e', lineHeight: 1, marginBottom: 8 },
-  title: { fontSize: 20, fontWeight: 700, color: '#f0fdf4', margin: 0 },
-  sub:   { fontSize: 13, color: '#4b7a5c', marginTop: 8, marginBottom: 28, textAlign: 'center' },
+  code:  { fontSize: 72, fontWeight: 900, color: '#3b82f6', lineHeight: 1, marginBottom: 8 },
+  title: { fontSize: 20, fontWeight: 700, color: '#f8fafc', margin: 0 },
+  sub:   { fontSize: 13, color: '#64748b', marginTop: 8, marginBottom: 28, textAlign: 'center' },
   btn:   {
-    background: '#22c55e', color: '#0a0f0d', border: 'none',
+    background: '#3b82f6', color: '#0f172a', border: 'none',
     borderRadius: 8, padding: '11px 28px', fontWeight: 700, fontSize: 14,
     cursor: 'pointer',
   },

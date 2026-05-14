@@ -112,17 +112,20 @@ const nav = [
 ]
 
 const C = {
-  BRAND_GREEN:      '#22c55e',
-  BRAND_GREEN_DARK: '#16a34a',
-  BRAND_GREEN_DIM:  '#14532d',
-  BG_BASE:          '#0a0f0d',
-  BG_CARD:          '#111827',
-  BG_SIDEBAR:       '#0d1a12',
-  BORDER:           '#1a3a25',
-  TEXT_PRIMARY:     '#f0fdf4',
-  TEXT_SECONDARY:   '#86efac',
-  TEXT_MUTED:       '#4b7a5c',
-  ACCENT_RED:       '#ef4444',
+  // Dark theme colors matching index.css variables
+  BRAND_GREEN:      '#3b82f6',       // Blue accent (primary)
+  BRAND_GREEN_DARK: '#1e3a5f',       // Darker blue for backgrounds
+  BRAND_GREEN_DIM:  'rgba(59,130,246,0.1)', // Dimmed blue
+  BG_BASE:          '#0f172a',       // Slate 900
+  BG_CARD:          '#1e293b',       // Slate 800
+  BG_SIDEBAR:       '#0f172a',       // Same as base
+  BORDER:           '#334155',       // Slate 700
+  TEXT_PRIMARY:     '#f8fafc',       // Slate 50
+  TEXT_SECONDARY:   '#94a3b8',       // Slate 400
+  TEXT_MUTED:       '#64748b',       // Slate 500
+  ACCENT_RED:       '#ef4444',       // Red 500
+  SUCCESS:          '#10b981',       // Emerald 500
+  WARNING:          '#f59e0b',       // Amber 500
 }
 
 export default function Layout() {
@@ -226,7 +229,7 @@ const styles = {
   root: {
     display: 'flex', height: '100vh',
     background: C.BG_BASE,
-    fontFamily: "'Segoe UI', -apple-system, sans-serif",
+    fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
     color: C.TEXT_PRIMARY,
     overflow: 'hidden',
   },
@@ -234,54 +237,59 @@ const styles = {
     background: C.BG_SIDEBAR,
     borderRight: `1px solid ${C.BORDER}`,
     display: 'flex', flexDirection: 'column',
-    transition: 'width 0.2s ease', flexShrink: 0,
+    transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1)', flexShrink: 0,
   },
   sidebarHeader: {
-    padding: '14px 12px',
+    padding: '16px 14px',
     borderBottom: `1px solid ${C.BORDER}`,
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    minHeight: 64, gap: 8,
+    minHeight: 72, gap: 8,
   },
   collapseBtn: {
-    background: 'none', border: 'none',
+    background: 'transparent', border: 'none',
     color: C.TEXT_MUTED,
-    cursor: 'pointer', padding: 4,
+    cursor: 'pointer', padding: 6,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    borderRadius: 6, flexShrink: 0,
+    borderRadius: 8, flexShrink: 0,
+    transition: 'all 0.2s',
   },
-  nav: { flex: 1, padding: '8px 0', overflowY: 'auto' },
+  nav: { flex: 1, padding: '12px 0', overflowY: 'auto' },
   navItem: {
-    display: 'flex', alignItems: 'center', gap: 10,
-    padding: '10px 16px', textDecoration: 'none',
-    fontSize: 14, fontWeight: 500, transition: 'all 0.15s',
+    display: 'flex', alignItems: 'center', gap: 12,
+    padding: '12px 16px', textDecoration: 'none',
+    fontSize: 14, fontWeight: 500, transition: 'all 0.2s',
     cursor: 'pointer',
+    borderRadius: 8, margin: '2px 8px',
   },
   navIcon: {
     width: 22, display: 'flex', alignItems: 'center', justifyContent: 'center',
     flexShrink: 0,
+    transition: 'color 0.2s',
   },
   navLabel: { whiteSpace: 'nowrap', overflow: 'hidden' },
   sidebarFooter: {
-    borderTop: `1px solid ${C.BORDER}`, padding: '12px',
-    display: 'flex', flexDirection: 'column', gap: 8,
+    borderTop: `1px solid ${C.BORDER}`, padding: '14px',
+    display: 'flex', flexDirection: 'column', gap: 10,
   },
   shiftBadge: {
     background: C.BRAND_GREEN_DIM,
     border: `1px solid ${C.BRAND_GREEN}33`,
-    borderRadius: 6, padding: '5px 8px',
-    display: 'flex', alignItems: 'center', gap: 6,
+    borderRadius: 8, padding: '8px 10px',
+    display: 'flex', alignItems: 'center', gap: 8,
   },
   userInfo: { overflow: 'hidden' },
   userName: {
-    fontSize: 13, fontWeight: 600, color: C.TEXT_PRIMARY,
+    fontSize: 14, fontWeight: 600, color: C.TEXT_PRIMARY,
     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
   },
-  userRole: { fontSize: 11, color: C.TEXT_MUTED, marginTop: 2 },
+  userRole: { fontSize: 12, color: C.TEXT_MUTED, marginTop: 2, fontWeight: 500 },
   logoutBtn: {
-    background: 'none', border: 'none', cursor: 'pointer',
-    color: C.TEXT_MUTED, padding: 4, alignSelf: 'flex-start',
-    display: 'flex', alignItems: 'center',
-    borderRadius: 6,
+    background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', 
+    cursor: 'pointer',
+    color: '#f87171', padding: 8, alignSelf: 'stretch',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    borderRadius: 8,
+    transition: 'all 0.2s',
   },
   main: {
     flex: 1, overflow: 'auto', background: C.BG_BASE,

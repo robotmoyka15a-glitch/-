@@ -4,16 +4,19 @@ import { useStore } from '../store'
 import RobotLogo from '../components/RobotLogo'
 
 const C = {
-  BRAND_GREEN:      '#22c55e',
-  BRAND_GREEN_DARK: '#16a34a',
-  BG_BASE:          '#0a0f0d',
-  BG_CARD:          '#111827',
-  BG_SIDEBAR:       '#0d1a12',
-  BORDER:           '#1a3a25',
-  TEXT_PRIMARY:     '#f0fdf4',
-  TEXT_SECONDARY:   '#86efac',
-  TEXT_MUTED:       '#4b7a5c',
-  ACCENT_RED:       '#ef4444',
+  // Dark theme colors matching index.css variables
+  BRAND_GREEN:      '#3b82f6',       // Blue accent (primary)
+  BRAND_GREEN_DARK: '#1e3a5f',       // Darker blue for backgrounds
+  BRAND_GREEN_DIM:  'rgba(59,130,246,0.1)', // Dimmed blue
+  BG_BASE:          '#0f172a',       // Slate 900
+  BG_CARD:          '#1e293b',       // Slate 800
+  BG_SIDEBAR:       '#0f172a',       // Same as base
+  BORDER:           '#334155',       // Slate 700
+  TEXT_PRIMARY:     '#f8fafc',       // Slate 50
+  TEXT_SECONDARY:   '#94a3b8',       // Slate 400
+  TEXT_MUTED:       '#64748b',       // Slate 500
+  ACCENT_RED:       '#ef4444',       // Red 500
+  SUCCESS:          '#10b981',       // Emerald 500
 }
 
 export default function Login() {
@@ -115,44 +118,44 @@ export default function Login() {
 const s = {
   page: {
     minHeight: '100vh',
-    background: '#0a0f0d',
+    background: '#0f172a',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontFamily: "'Segoe UI', sans-serif",
+    fontFamily: "'Inter', system-ui, sans-serif",
   },
   card: {
-    background: '#111827',
-    border: '1px solid #1a3a25',
-    borderRadius: 16, padding: '40px 36px', width: 340,
+    background: '#1e293b',
+    border: '1px solid #334155',
+    borderRadius: 16, padding: '40px 36px', width: 380,
     display: 'flex', flexDirection: 'column', alignItems: 'center',
-    boxShadow: '0 0 40px rgba(34,197,94,0.1), 0 24px 48px rgba(0,0,0,0.6)',
+    boxShadow: '0 0 40px rgba(59,130,246,0.1), 0 24px 48px rgba(0,0,0,0.6)',
   },
   logoWrap: {
-    marginBottom: 16,
+    marginBottom: 24,
   },
   subtitle: {
-    color: '#4b7a5c', fontSize: 13, marginTop: 4, marginBottom: 32,
-    textAlign: 'center',
+    color: '#94a3b8', fontSize: 14, marginTop: 8, marginBottom: 32,
+    textAlign: 'center', fontWeight: 500,
   },
-  form: { width: '100%', display: 'flex', flexDirection: 'column', gap: 16 },
-  field: { display: 'flex', flexDirection: 'column', gap: 6 },
-  label: { fontSize: 13, color: '#86efac', fontWeight: 500 },
+  form: { width: '100%', display: 'flex', flexDirection: 'column', gap: 20 },
+  field: { display: 'flex', flexDirection: 'column', gap: 8 },
+  label: { fontSize: 14, color: '#cbd5e1', fontWeight: 600, letterSpacing: 0.3 },
   input: {
-    background: '#0d1a12',
-    border: '1px solid #1a3a25',
-    borderRadius: 8, padding: '10px 14px', color: '#f0fdf4',
-    fontSize: 14, outline: 'none',
+    background: '#0f172a',
+    border: '1px solid #334155',
+    borderRadius: 10, padding: '12px 16px', color: '#f8fafc',
+    fontSize: 15, outline: 'none',
     transition: 'border-color 0.2s, box-shadow 0.2s',
   },
   error: {
-    background: '#450a0a', border: '1px solid #7f1d1d',
-    borderRadius: 8, padding: '10px 14px',
-    color: '#fca5a5', fontSize: 13,
+    background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
+    borderRadius: 10, padding: '12px 16px',
+    color: '#fca5a5', fontSize: 14, fontWeight: 500,
   },
   btn: {
-    color: '#0a0f0d', border: 'none',
-    borderRadius: 8, padding: '12px', fontSize: 15, fontWeight: 700,
-    cursor: 'pointer', marginTop: 4,
-    transition: 'background 0.2s',
+    color: '#0f172a', border: 'none',
+    borderRadius: 10, padding: '14px', fontSize: 16, fontWeight: 700,
+    cursor: 'pointer', marginTop: 8,
+    transition: 'background 0.2s, transform 0.1s',
   },
-  hint: { marginTop: 20, fontSize: 11, color: '#1a3a25' },
+  hint: { marginTop: 24, fontSize: 12, color: '#475569', fontWeight: 500 },
 }

@@ -70,34 +70,34 @@ export default class ErrorBoundary extends React.Component {
 
 const s = {
   page: {
-    minHeight: '100vh', background: '#0a0f0d',
+    minHeight: '100vh', background: '#0f172a',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontFamily: "'Segoe UI', sans-serif", padding: 24,
   },
   card: {
-    background: '#111827', border: '1px solid #1a3a25',
+    background: '#1e293b', border: '1px solid #1a3a25',
     borderRadius: 16, padding: '40px 36px', maxWidth: 440, width: '100%',
     display: 'flex', flexDirection: 'column', alignItems: 'center',
     boxShadow: '0 0 40px rgba(34,197,94,0.06)',
   },
-  title:    { fontSize: 22, fontWeight: 700, color: '#f0fdf4', margin: 0 },
-  subtitle: { fontSize: 14, color: '#4b7a5c', marginTop: 8, marginBottom: 20, textAlign: 'center' },
+  title:    { fontSize: 22, fontWeight: 700, color: '#f8fafc', margin: 0 },
+  subtitle: { fontSize: 14, color: '#64748b', marginTop: 8, marginBottom: 20, textAlign: 'center' },
   errorBox: {
-    background: '#0a0f0d', border: '1px solid #1a3a25',
+    background: '#0f172a', border: '1px solid #1a3a25',
     borderRadius: 8, padding: '10px 14px', width: '100%', marginBottom: 20,
     maxHeight: 80, overflow: 'auto',
   },
   errorMsg: { fontSize: 12, color: '#ef4444', fontFamily: 'monospace', wordBreak: 'break-all' },
   actions:  { display: 'flex', gap: 10, marginBottom: 16 },
   btnPrimary: {
-    background: '#22c55e', color: '#0a0f0d', border: 'none',
+    background: '#3b82f6', color: '#0f172a', border: 'none',
     borderRadius: 8, padding: '10px 22px', fontWeight: 700, fontSize: 14,
     cursor: 'pointer',
   },
   btnSecondary: {
-    background: 'transparent', color: '#86efac',
+    background: 'transparent', color: '#94a3b8',
     border: '1px solid #1a3a25', borderRadius: 8,
     padding: '10px 18px', fontSize: 14, cursor: 'pointer',
   },
-  hint: { fontSize: 11, color: '#4b7a5c', textAlign: 'center', lineHeight: 1.6 },
+  hint: { fontSize: 11, color: '#64748b', textAlign: 'center', lineHeight: 1.6 },
 }

@@ -104,8 +104,15 @@ export const settingsAPI = {
   get:       ()     => api.get('/settings'),
   update:    (data) => api.put('/settings', { data }),
   washModes: ()     => api.get('/settings/wash-modes'),
-  backup:    ()     => api.post('/settings/backup'),
-  backups:   ()     => api.get('/settings/backups'),
+}
+
+// ── Backups ────────────────────────────────────────────────────────────────────
+export const backupsAPI = {
+  create:    ()           => api.post('/backup/create'),
+  list:      ()           => api.get('/backup/list'),
+  restore:   (filename)   => api.post('/backup/restore', { filename }),
+  delete:    (filename)   => api.delete(`/backup/delete/${filename}`),
+  stats:     ()           => api.get('/backup/stats'),
 }
 
 // ── System ────────────────────────────────────────────────────────────────────

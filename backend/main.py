@@ -9,8 +9,9 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 # Добавляем корень проекта в sys.path для корректных импортов
@@ -22,10 +23,11 @@ from backend.database import init_db
 from backend.config import API_HOST, API_PORT, LOG_FILE, LOG_LEVEL
 from backend.routers import (
     auth, shifts, cars, events, reports,
-    cameras, settings_router, ai_router,
+    cameras, settings_router, ai_router, backups,
 )
 from backend.routers.auth import require_admin
 from backend.services import telegram_bot, scheduler
+from backend.middleware import health_check
 
 # ── Логирование ───────────────────────────────────────────────────────────────
 LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -105,6 +107,36 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# ── Middleware для rate limiting ──────────────────────────────────────────────
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    """Middleware для проверки rate limit на все запросы."""
+    from backend.middleware import get_remote_address, check_rate_limit
+    
+    client_ip = get_remote_address(request)
+    
+    # Строгий лимит для чувствительных эндпоинтов
+    sensitive_paths = ["/auth/login", "/auth/change-password"]
+    if any(request.url.path.startswith(p) for p in sensitive_paths):
+        key = f"{client_ip}:{request.url.path}"
+        if check_rate_limit(key, max_requests=10, window_seconds=60):
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Слишком много запросов. Попробуйте позже."}
+            )
+    else:
+        # Обычный лимит для остальных
+        key = f"{client_ip}:global"
+        if check_rate_limit(key, max_requests=60, window_seconds=60):
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Слишком много запросов. Попробуйте позже."}
+            )
+    
+    response = await call_next(request)
+    return response
+
 # ── Роутеры ───────────────────────────────────────────────────────────────────
 app.include_router(auth.router)
 app.include_router(shifts.router)
@@ -114,6 +146,7 @@ app.include_router(reports.router)
 app.include_router(cameras.router)
 app.include_router(settings_router.router)
 app.include_router(ai_router.router)
+app.include_router(backups.router)
 
 
 # ── Системные эндпоинты ───────────────────────────────────────────────────────
@@ -138,21 +171,12 @@ def api_version():
 
 
 @app.get("/health", tags=["system"])
-def health():
-    from backend.database import get_connection
-    try:
-        conn = get_connection()
-        conn.execute("SELECT 1").fetchone()
-        db_ok = True
-    except Exception:
-        db_ok = False
-
-    from backend.services.ai_worker import is_available
-    return {
-        "status":   "ok" if db_ok else "degraded",
-        "database": "ok" if db_ok else "error",
-        "ai":       "available" if is_available() else "unavailable",
-    }
+async def health():
+    """
+    Расширенная проверка здоровья системы.
+    Проверяет БД, AI, место на диске.
+    """
+    return await health_check()
 
 
 @app.post("/notify/test", tags=["system"])

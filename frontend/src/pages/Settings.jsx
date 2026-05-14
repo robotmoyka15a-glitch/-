@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react'
-import { settingsAPI, systemAPI, authAPI, aiAPI } from '../api'
+import { settingsAPI, systemAPI, authAPI, aiAPI, backupsAPI } from '../api'
 
 // Палитра — объявлена в начале файла, доступна всем компонентам
 const C = {
-  BRAND_GREEN:      '#22c55e',
-  BRAND_GREEN_DARK: '#16a34a',
-  BRAND_GREEN_DIM:  '#14532d',
-  BG_BASE:          '#0a0f0d',
-  BG_CARD:          '#111827',
-  BG_SIDEBAR:       '#0d1a12',
-  BORDER:           '#1a3a25',
-  TEXT_PRIMARY:     '#f0fdf4',
-  TEXT_SECONDARY:   '#86efac',
-  TEXT_MUTED:       '#4b7a5c',
+  BRAND_GREEN:      '#3b82f6',
+  BRAND_GREEN_DARK: '#1e3a5f',
+  BRAND_GREEN_DIM:  'rgba(59,130,246,0.1)',
+  BG_BASE:          '#0f172a',
+  BG_CARD:          '#1e293b',
+  BG_SIDEBAR:       '#0f172a',
+  BORDER:           '#334155',
+  TEXT_PRIMARY:     '#f8fafc',
+  TEXT_SECONDARY:   '#94a3b8',
+  TEXT_MUTED:       '#64748b',
   ACCENT_YELLOW:    '#fbbf24',
   ACCENT_RED:       '#ef4444',
 }
@@ -37,8 +37,12 @@ export default function Settings() {
 
   useEffect(() => {
     settingsAPI.get().then(r => { setSettings(r.data); setLoading(false) }).catch(() => setLoading(false))
-    settingsAPI.backups().then(r => setBackups(r.data)).catch(() => {})
+    loadBackups()
   }, [])
+
+  const loadBackups = () => {
+    backupsAPI.list().then(r => setBackups(r.data)).catch(() => {})
+  }
 
   const setSetting = (k, v) => setSettings(s => ({ ...s, [k]: v }))
 
@@ -56,11 +60,35 @@ export default function Settings() {
   const doBackup = async () => {
     setSaving(true)
     try {
-      const r = await settingsAPI.backup()
-      setMsg({ type: 'ok', text: `✓ Бэкап: ${r.data.backup_file}` })
-      settingsAPI.backups().then(r => setBackups(r.data))
+      const r = await backupsAPI.create()
+      setMsg({ type: 'ok', text: `✓ Бэкап создан` })
+      loadBackups()
     } catch { setMsg({ type: 'err', text: 'Ошибка бэкапа' }) }
     finally { setSaving(false) }
+  }
+
+  const doRestore = async (filename) => {
+    if (!window.confirm(`Восстановить базу данных из "${filename}"?\n\n⚠️ Сервис потребует перезапуска после восстановления.`)) return
+    setSaving(true)
+    try {
+      const r = await backupsAPI.restore(filename)
+      setMsg({ type: 'ok', text: `✓ ${r.data.message}` })
+      loadBackups()
+    } catch (e) { 
+      setMsg({ type: 'err', text: e.response?.data?.detail || 'Ошибка восстановления' }) 
+    }
+    finally { setSaving(false) }
+  }
+
+  const doDeleteBackup = async (filename) => {
+    if (!window.confirm(`Удалить бэкап "${filename}"?\n\nЭто действие необратимо.`)) return
+    try {
+      const r = await backupsAPI.delete(filename)
+      setMsg({ type: 'ok', text: `✓ ${r.data.message}` })
+      loadBackups()
+    } catch (e) { 
+      setMsg({ type: 'err', text: e.response?.data?.detail || 'Ошибка удаления' }) 
+    }
   }
 
   const testNotify = async () => {
@@ -227,8 +255,27 @@ export default function Settings() {
                   <div style={s.subTitle}>Существующие бэкапы ({backups.length})</div>
                   {backups.map(b => (
                     <div key={b.filename} style={s.backupRow}>
-                      <span style={s.backupName}>{b.filename}</span>
-                      <span style={s.backupMeta}>{b.created_at?.slice(0, 16)} · {b.size_kb} KB</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <span style={s.backupName}>{b.filename}</span>
+                        <span style={s.backupMeta}>{b.created_at?.slice(0, 16)} · {Math.round(b.size_bytes / 1024)} KB</span>
+                        {b.is_latest && <span style={{ fontSize: 10, color: C.BRAND_GREEN, border: `1px solid ${C.BRAND_GREEN}`, padding: '2px 6px', borderRadius: 4 }}>последний</span>}
+                      </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                          style={{ ...s.restoreBtn, background: C.BRAND_GREEN }}
+                          onClick={() => doRestore(b.filename)}
+                          title="Восстановить из этого бэкапа"
+                        >
+                          ↻ Восстановить
+                        </button>
+                        <button
+                          style={{ ...s.restoreBtn, background: '#7f1d1d' }}
+                          onClick={() => doDeleteBackup(b.filename)}
+                          title="Удалить этот бэкап"
+                        >
+                          ✕ Удалить
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -387,6 +434,8 @@ function UsersTab() {
   const [form, setForm]       = useState({ username: '', full_name: '', password: '', role: 'operator' })
   const [msg, setMsg]         = useState(null)
   const [loading, setLoading] = useState(false)
+  const [pwForm, setPwForm]   = useState({ userId: null, new_password: '' })
+  const [showPwModal, setShowPwModal] = useState(false)
 
   useEffect(() => {
     authAPI.users().then(r => setUsers(r.data)).catch(() => {})
@@ -412,6 +461,27 @@ function UsersTab() {
     authAPI.users().then(r => setUsers(r.data))
   }
 
+  const openResetPassword = (user) => {
+    setPwForm({ userId: user.id, username: user.username, new_password: '' })
+    setShowPwModal(true)
+  }
+
+  const resetPassword = async () => {
+    if (pwForm.new_password.length < 4) {
+      setMsg({ type: 'err', text: 'Пароль должен быть не менее 4 символов' })
+      return
+    }
+    setLoading(true)
+    try {
+      await authAPI.resetPassword(pwForm.userId, pwForm.new_password)
+      setMsg({ type: 'ok', text: `Пароль пользователя изменён` })
+      setShowPwModal(false)
+      setPwForm({ userId: null, username: '', new_password: '' })
+    } catch (err) {
+      setMsg({ type: 'err', text: err.response?.data?.detail || 'Ошибка' })
+    } finally { setLoading(false) }
+  }
+
   return (
     <Section title="Пользователи">
       {msg && <div style={msg.type === 'ok' ? s.ok : s.err}>{msg.text}</div>}
@@ -427,12 +497,21 @@ function UsersTab() {
                 {u.role === 'admin' ? 'admin' : 'operator'}
               </span>
             </div>
-            <button
-              style={u.is_active ? s.toggleActive : s.toggleOff}
-              onClick={() => toggle(u.id)}
-            >
-              {u.is_active ? 'Активен' : 'Отключён'}
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                style={{ ...s.toggleActive, background: '#334155' }}
+                onClick={() => openResetPassword(u)}
+                title="Сбросить пароль"
+              >
+                🔑 Сменить пароль
+              </button>
+              <button
+                style={u.is_active ? s.toggleActive : s.toggleOff}
+                onClick={() => toggle(u.id)}
+              >
+                {u.is_active ? 'Активен' : 'Отключён'}
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -449,6 +528,31 @@ function UsersTab() {
         </select>
         <button style={{ ...s.saveBtn, gridColumn: '1 / -1' }} type="submit" disabled={loading}>Создать</button>
       </form>
+
+      {/* Модальное окно смены пароля */}
+      {showPwModal && (
+        <div style={s.modalOverlay}>
+          <div style={s.modal}>
+            <div style={s.modalTitle}>Смена пароля: {pwForm.username}</div>
+            <input
+              style={{ ...s.input, marginBottom: 12 }}
+              type="password"
+              placeholder="Новый пароль"
+              value={pwForm.new_password}
+              onChange={e => setPwForm(p => ({ ...p, new_password: e.target.value }))}
+              autoFocus
+            />
+            <div style={s.btnRow}>
+              <button style={s.saveBtn} onClick={resetPassword} disabled={loading}>
+                {loading ? 'Сохраняем...' : '✓ Сохранить'}
+              </button>
+              <button style={{ ...s.testBtn, background: '#334155' }} onClick={() => setShowPwModal(false)}>
+                Отмена
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Section>
   )
 }
@@ -483,8 +587,8 @@ function SaveBtn({ onClick, loading }) {
 
 const s = {
   page:       { padding: '24px 28px', maxWidth: 900, margin: '0 auto' },
-  title:      { fontSize: 20, fontWeight: 700, color: '#f0fdf4', marginBottom: 20 },
-  loading:    { padding: 40, color: '#4b7a5c' },
+  title:      { fontSize: 20, fontWeight: 700, color: '#f8fafc', marginBottom: 20 },
+  loading:    { padding: 40, color: '#64748b' },
   layout:     { display: 'flex', gap: 20 },
   sidebar:    { width: 180, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 2 },
   secBtn:     {
@@ -495,30 +599,34 @@ const s = {
     transition: 'all 0.15s',
   },
   content:    { flex: 1 },
-  secTitle:   { fontSize: 15, fontWeight: 600, color: '#f0fdf4', marginBottom: 20, paddingBottom: 10, borderBottom: '1px solid #1a3a25' },
+  secTitle:   { fontSize: 15, fontWeight: 600, color: '#f8fafc', marginBottom: 20, paddingBottom: 10, borderBottom: '1px solid #1a3a25' },
   secBody:    { display: 'flex', flexDirection: 'column', gap: 16 },
   field:      { display: 'flex', flexDirection: 'column', gap: 6 },
-  fieldLabel: { fontSize: 13, color: '#86efac', fontWeight: 500 },
-  fieldHint:  { fontSize: 11, color: '#4b7a5c' },
-  hint:       { background: '#0d1a12', border: '1px solid #1a3a25', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#4b7a5c', lineHeight: 1.7 },
-  input:      { background: '#0d1a12', border: '1px solid #1a3a25', borderRadius: 8, padding: '9px 12px', color: '#f0fdf4', fontSize: 13, outline: 'none' },
-  checkbox:   { display: 'flex', gap: 8, alignItems: 'center', fontSize: 13, color: '#86efac', cursor: 'pointer' },
+  fieldLabel: { fontSize: 13, color: '#94a3b8', fontWeight: 500 },
+  fieldHint:  { fontSize: 11, color: '#64748b' },
+  hint:       { background: '#0f172a', border: '1px solid #1a3a25', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#64748b', lineHeight: 1.7 },
+  input:      { background: '#0f172a', border: '1px solid #1a3a25', borderRadius: 8, padding: '9px 12px', color: '#f8fafc', fontSize: 13, outline: 'none' },
+  checkbox:   { display: 'flex', gap: 8, alignItems: 'center', fontSize: 13, color: '#94a3b8', cursor: 'pointer' },
   radioRow:   { display: 'flex', gap: 8, alignItems: 'center', fontSize: 13, cursor: 'pointer' },
-  saveBtn:    { background: '#22c55e', color: '#0a0f0d', border: 'none', borderRadius: 8, padding: '10px 20px', cursor: 'pointer', fontSize: 13, fontWeight: 700, alignSelf: 'flex-start' },
+  saveBtn:    { background: '#3b82f6', color: '#0f172a', border: 'none', borderRadius: 8, padding: '10px 20px', cursor: 'pointer', fontSize: 13, fontWeight: 700, alignSelf: 'flex-start' },
   btnRow:     { display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' },
-  testBtn:    { background: '#0d1a12', color: '#86efac', border: '1px solid #1a3a25', borderRadius: 8, padding: '10px 16px', cursor: 'pointer', fontSize: 13 },
-  ok:         { background: '#14532d', border: '1px solid #22c55e', borderRadius: 8, padding: '10px 14px', color: '#22c55e', fontSize: 13, marginBottom: 4 },
+  testBtn:    { background: '#0f172a', color: '#94a3b8', border: '1px solid #1a3a25', borderRadius: 8, padding: '10px 16px', cursor: 'pointer', fontSize: 13 },
+  ok:         { background: 'rgba(59,130,246,0.1)', border: '1px solid #22c55e', borderRadius: 8, padding: '10px 14px', color: '#3b82f6', fontSize: 13, marginBottom: 4 },
   err:        { background: '#450a0a', border: '1px solid #7f1d1d', borderRadius: 8, padding: '10px 14px', color: '#fca5a5', fontSize: 13, marginBottom: 4 },
-  subTitle:   { fontSize: 13, fontWeight: 600, color: '#86efac', marginBottom: 10 },
+  subTitle:   { fontSize: 13, fontWeight: 600, color: '#94a3b8', marginBottom: 10 },
   backupRow:  { display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #1a3a25', fontSize: 12 },
-  backupName: { color: '#86efac', fontFamily: 'monospace' },
-  backupMeta: { color: '#4b7a5c' },
+  backupName: { color: '#94a3b8', fontFamily: 'monospace' },
+  backupMeta: { color: '#64748b' },
   userRow:    { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: '1px solid #1a3a25' },
-  uName:      { fontSize: 13, fontWeight: 600, color: '#f0fdf4' },
-  uLogin:     { fontSize: 12, color: '#4b7a5c' },
-  roleAdmin:  { background: '#14532d', color: '#22c55e', borderRadius: 6, padding: '2px 8px', fontSize: 11, border: '1px solid #1a3a25' },
-  roleOp:     { background: '#111827', color: '#4b7a5c', borderRadius: 6, padding: '2px 8px', fontSize: 11, border: '1px solid #1a3a25' },
-  toggleActive: { background: '#14532d', color: '#22c55e', border: '1px solid #1a3a25', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 11 },
-  toggleOff:    { background: '#111827', color: '#4b7a5c', border: '1px solid #1a3a25', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 11 },
+  uName:      { fontSize: 13, fontWeight: 600, color: '#f8fafc' },
+  uLogin:     { fontSize: 12, color: '#64748b' },
+  roleAdmin:  { background: 'rgba(59,130,246,0.1)', color: '#3b82f6', borderRadius: 6, padding: '2px 8px', fontSize: 11, border: '1px solid #1a3a25' },
+  roleOp:     { background: '#1e293b', color: '#64748b', borderRadius: 6, padding: '2px 8px', fontSize: 11, border: '1px solid #1a3a25' },
+  toggleActive: { background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid #1a3a25', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 11 },
+  toggleOff:    { background: '#1e293b', color: '#64748b', border: '1px solid #1a3a25', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 11 },
   userForm:   { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 },
+  restoreBtn: { color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 11, fontWeight: 600 },
+  modalOverlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 },
+  modal: { background: C.BG_CARD, border: `1px solid ${C.BORDER}`, borderRadius: 12, padding: 24, width: '100%', maxWidth: 380 },
+  modalTitle: { fontSize: 16, fontWeight: 700, color: C.TEXT_PRIMARY, marginBottom: 16 },
 }

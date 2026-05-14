@@ -2,15 +2,15 @@ import React, { useState, useEffect, useRef } from 'react'
 import { aiAPI } from '../api'
 
 const C = {
-  BRAND_GREEN:     '#22c55e',
-  BRAND_GREEN_DIM: '#14532d',
-  BG_BASE:         '#0a0f0d',
-  BG_CARD:         '#111827',
-  BG_SIDEBAR:      '#0d1a12',
-  BORDER:          '#1a3a25',
-  TEXT_PRIMARY:    '#f0fdf4',
-  TEXT_SECONDARY:  '#86efac',
-  TEXT_MUTED:      '#4b7a5c',
+  BRAND_GREEN:     '#3b82f6',
+  BRAND_GREEN_DIM: 'rgba(59,130,246,0.1)',
+  BG_BASE:         '#0f172a',
+  BG_CARD:         '#1e293b',
+  BG_SIDEBAR:      '#0f172a',
+  BORDER:          '#334155',
+  TEXT_PRIMARY:    '#f8fafc',
+  TEXT_SECONDARY:  '#94a3b8',
+  TEXT_MUTED:      '#64748b',
   ACCENT_YELLOW:   '#fbbf24',
 }
 
@@ -163,7 +163,7 @@ export default function AIChat() {
         <button style={{
           ...s.sendBtn,
           background: loading || !input.trim() ? C.BRAND_GREEN_DIM : C.BRAND_GREEN,
-          color: loading || !input.trim() ? '#4b7a5c' : '#0a0f0d',
+          color: loading || !input.trim() ? '#64748b' : '#0f172a',
         }} onClick={send} disabled={loading || !input.trim()}>
           {loading ? '...' : '▶'}
         </button>
@@ -175,21 +175,21 @@ export default function AIChat() {
 const s = {
   page:        { padding: '24px 28px', maxWidth: 800, margin: '0 auto', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 0px)' },
   header:      { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  title:       { fontSize: 20, fontWeight: 700, color: '#f0fdf4', margin: 0 },
-  providerBadge: { background: '#111827', border: '1px solid #1a3a25', color: '#86efac', borderRadius: 8, padding: '3px 10px', fontSize: 11, fontWeight: 600 },
-  aiOn:        { background: '#14532d', color: '#22c55e', borderRadius: 8, padding: '4px 12px', fontSize: 12, fontWeight: 600, border: '1px solid #1a3a25' },
-  aiOff:       { background: '#111827', color: '#4b7a5c', borderRadius: 8, padding: '4px 12px', fontSize: 12, border: '1px solid #1a3a25' },
-  aiHint:      { background: '#111827', border: '1px solid #1a3a25', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#4b7a5c', marginBottom: 12 },
+  title:       { fontSize: 20, fontWeight: 700, color: '#f8fafc', margin: 0 },
+  providerBadge: { background: '#1e293b', border: '1px solid #1a3a25', color: '#94a3b8', borderRadius: 8, padding: '3px 10px', fontSize: 11, fontWeight: 600 },
+  aiOn:        { background: 'rgba(59,130,246,0.1)', color: '#3b82f6', borderRadius: 8, padding: '4px 12px', fontSize: 12, fontWeight: 600, border: '1px solid #1a3a25' },
+  aiOff:       { background: '#1e293b', color: '#64748b', borderRadius: 8, padding: '4px 12px', fontSize: 12, border: '1px solid #1a3a25' },
+  aiHint:      { background: '#1e293b', border: '1px solid #1a3a25', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#64748b', marginBottom: 12 },
   quickRow:    { display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  quickBtn:    { background: '#111827', border: '1px solid #1a3a25', borderRadius: 8, padding: '6px 12px', color: '#86efac', cursor: 'pointer', fontSize: 12, fontWeight: 500 },
+  quickBtn:    { background: '#1e293b', border: '1px solid #1a3a25', borderRadius: 8, padding: '6px 12px', color: '#94a3b8', cursor: 'pointer', fontSize: 12, fontWeight: 500 },
   chat:        { flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, paddingBottom: 12, maxHeight: 'calc(100vh - 320px)', minHeight: 200 },
   userMsg:     { display: 'flex', justifyContent: 'flex-end' },
   aiMsg:       { display: 'flex', gap: 8, alignItems: 'flex-start' },
-  aiAvatar:    { width: 32, height: 32, borderRadius: 8, background: '#14532d', border: '1px solid #1a3a25', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  userBubble:  { background: '#14532d', color: '#f0fdf4', borderRadius: '12px 12px 2px 12px', padding: '10px 14px', fontSize: 14, maxWidth: '70%', lineHeight: 1.5, border: '1px solid #1a3a25' },
-  aiBubble:    { background: '#111827', border: '1px solid #1a3a25', color: '#f0fdf4', borderRadius: '12px 12px 12px 2px', padding: '10px 14px', fontSize: 14, maxWidth: '80%', lineHeight: 1.6, whiteSpace: 'pre-wrap' },
-  typing:      { color: '#4b7a5c', letterSpacing: 4 },
+  aiAvatar:    { width: 32, height: 32, borderRadius: 8, background: 'rgba(59,130,246,0.1)', border: '1px solid #1a3a25', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  userBubble:  { background: 'rgba(59,130,246,0.1)', color: '#f8fafc', borderRadius: '12px 12px 2px 12px', padding: '10px 14px', fontSize: 14, maxWidth: '70%', lineHeight: 1.5, border: '1px solid #1a3a25' },
+  aiBubble:    { background: '#1e293b', border: '1px solid #1a3a25', color: '#f8fafc', borderRadius: '12px 12px 12px 2px', padding: '10px 14px', fontSize: 14, maxWidth: '80%', lineHeight: 1.6, whiteSpace: 'pre-wrap' },
+  typing:      { color: '#64748b', letterSpacing: 4 },
   inputRow:    { display: 'flex', gap: 10, marginTop: 12, alignItems: 'flex-end' },
-  input:       { flex: 1, background: '#111827', border: '1px solid #1a3a25', borderRadius: 10, padding: '10px 14px', color: '#f0fdf4', fontSize: 14, outline: 'none', resize: 'none', fontFamily: 'inherit' },
+  input:       { flex: 1, background: '#1e293b', border: '1px solid #1a3a25', borderRadius: 10, padding: '10px 14px', color: '#f8fafc', fontSize: 14, outline: 'none', resize: 'none', fontFamily: 'inherit' },
   sendBtn:     { border: 'none', borderRadius: 10, width: 48, height: 48, cursor: 'pointer', fontSize: 16, fontWeight: 700, flexShrink: 0, transition: 'background 0.2s' },
 }

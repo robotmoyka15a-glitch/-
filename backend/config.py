@@ -5,6 +5,7 @@ WashControl — конфигурация приложения
 
 from pathlib import Path
 import os
+import secrets
 
 # ── Пути ─────────────────────────────────────────────────────────────────────
 BASE_DIR        = Path(__file__).parent.parent          # корень проекта
@@ -29,9 +30,43 @@ API_PORT    = int(os.getenv("WASHCONTROL_PORT", "8765"))
 API_BASE    = f"http://{API_HOST}:{API_PORT}"
 
 # ── JWT ───────────────────────────────────────────────────────────────────────
-SECRET_KEY          = os.getenv("WASHCONTROL_SECRET", "washcontrol-secret-change-me")
+# Критическое исправление: генерируем случайный secret при первом запуске
+# Если переменная не задана — генерируем и сохраняем в .env файл
+def _get_or_create_secret() -> str:
+    env_file = BASE_DIR / ".env"
+    existing = os.getenv("WASHCONTROL_SECRET")
+    if existing:
+        return existing
+    # Пытаемся прочитать из .env
+    if env_file.exists():
+        with open(env_file, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("WASHCONTROL_SECRET="):
+                    return line.split("=", 1)[1].strip()
+    # Генерируем новый и сохраняем
+    new_secret = secrets.token_urlsafe(32)
+    try:
+        if env_file.exists():
+            with open(env_file, "r", encoding="utf-8") as f:
+                content = f.read()
+            if "WASHCONTROL_SECRET=" not in content:
+                with open(env_file, "a", encoding="utf-8") as f:
+                    f.write(f"\nWASHCONTROL_SECRET={new_secret}\n")
+        else:
+            with open(env_file, "w", encoding="utf-8") as f:
+                f.write(f"WASHCONTROL_SECRET={new_secret}\n")
+    except Exception:
+        pass  # Не удалось сохранить, используем временный
+    return new_secret
+
+SECRET_KEY          = _get_or_create_secret()
 JWT_ALGORITHM       = "HS256"
 ACCESS_TOKEN_EXPIRE = 60 * 12      # 12 часов в минутах
+
+# ── Rate Limiting ─────────────────────────────────────────────────────────────
+RATE_LIMIT_MAX_REQUESTS = 60       # запросов в минуту для обычных эндпоинтов
+RATE_LIMIT_STRICT = 10             # запросов в минуту для чувствительных (login)
+RATE_LIMIT_WINDOW = 60             # окно в секундах
 
 # ── Смены ─────────────────────────────────────────────────────────────────────
 DEFAULT_SHIFT_START = "08:00"
@@ -67,3 +102,9 @@ AI_CONTEXT_SIZE = 2048             # умеренный контекст для 
 
 # ── Бэкап ────────────────────────────────────────────────────────────────────
 BACKUP_KEEP_DAYS = 14              # хранить бэкапы 14 дней
+
+# ── Retry Logic ───────────────────────────────────────────────────────────────
+MAX_RETRIES = 3                    # максимум попыток для внешних API
+RETRY_BACKOFF = 2                  # экспоненциальная задержка (2^attempt сек)
+CIRCUIT_BREAKER_THRESHOLD = 5      # неудач до открытия circuit breaker
+CIRCUIT_BREAKER_TIMEOUT = 60       # секунд до попытки восстановления
