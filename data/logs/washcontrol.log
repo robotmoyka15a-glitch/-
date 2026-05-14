@@ -1,0 +1,83 @@
+2026-05-14 07:55:29,545 [INFO] washcontrol: WashControl запускается...
+2026-05-14 07:55:29,548 [INFO] washcontrol: База данных готова
+2026-05-14 07:55:29,548 [INFO] washcontrol.telegram: Telegram bot token не задан, бот не запускается
+2026-05-14 07:55:29,823 [INFO] apscheduler.scheduler: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-14 07:55:29,823 [INFO] apscheduler.scheduler: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-14 07:55:29,823 [INFO] apscheduler.scheduler: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-14 07:55:29,823 [INFO] apscheduler.scheduler: Added job "_daily_report_job" to job store "default"
+2026-05-14 07:55:29,823 [INFO] apscheduler.scheduler: Added job "_backup_job" to job store "default"
+2026-05-14 07:55:29,823 [INFO] apscheduler.scheduler: Added job "_check_late_shift" to job store "default"
+2026-05-14 07:55:29,823 [INFO] apscheduler.scheduler: Scheduler started
+2026-05-14 07:55:29,824 [INFO] washcontrol.scheduler: Планировщик задач запущен
+2026-05-14 07:55:29,824 [INFO] washcontrol: API доступен на http://127.0.0.1:8765
+2026-05-14 07:55:29,824 [INFO] washcontrol: WashControl готов к работе ✓
+2026-05-14 07:55:39,560 [INFO] washcontrol: WashControl останавливается...
+2026-05-14 07:55:39,560 [INFO] apscheduler.scheduler: Scheduler has been shut down
+2026-05-14 07:55:39,560 [INFO] washcontrol.scheduler: Планировщик остановлен
+2026-05-14 07:55:39,560 [INFO] washcontrol: WashControl остановлен
+2026-05-14 09:14:14,142 [INFO] washcontrol: WashControl запускается...
+2026-05-14 09:14:14,143 [INFO] washcontrol: База данных готова
+2026-05-14 09:14:14,143 [INFO] washcontrol.telegram: Telegram bot token не задан, бот не запускается
+2026-05-14 09:14:14,243 [INFO] apscheduler.scheduler: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-14 09:14:14,244 [INFO] apscheduler.scheduler: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-14 09:14:14,244 [INFO] apscheduler.scheduler: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-14 09:14:14,244 [INFO] apscheduler.scheduler: Added job "_daily_report_job" to job store "default"
+2026-05-14 09:14:14,244 [INFO] apscheduler.scheduler: Added job "_backup_job" to job store "default"
+2026-05-14 09:14:14,244 [INFO] apscheduler.scheduler: Added job "_check_late_shift" to job store "default"
+2026-05-14 09:14:14,244 [INFO] apscheduler.scheduler: Scheduler started
+2026-05-14 09:14:14,245 [INFO] washcontrol.scheduler: Планировщик задач запущен
+2026-05-14 09:14:14,245 [INFO] washcontrol: API доступен на http://127.0.0.1:8765
+2026-05-14 09:14:14,245 [INFO] washcontrol: WashControl готов к работе ✓
+2026-05-14 09:14:34,912 [INFO] washcontrol: WashControl останавливается...
+2026-05-14 09:14:34,912 [INFO] apscheduler.scheduler: Scheduler has been shut down
+2026-05-14 09:14:34,912 [INFO] washcontrol.scheduler: Планировщик остановлен
+2026-05-14 09:14:34,912 [INFO] washcontrol: WashControl остановлен
+2026-05-14 09:14:48,087 [INFO] washcontrol: WashControl запускается...
+2026-05-14 09:14:48,088 [INFO] washcontrol: База данных готова
+2026-05-14 09:14:48,088 [INFO] washcontrol.telegram: Telegram bot token не задан, бот не запускается
+2026-05-14 09:14:48,199 [INFO] apscheduler.scheduler: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-14 09:14:48,200 [INFO] apscheduler.scheduler: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-14 09:14:48,200 [INFO] apscheduler.scheduler: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-14 09:14:48,200 [INFO] apscheduler.scheduler: Added job "_daily_report_job" to job store "default"
+2026-05-14 09:14:48,200 [INFO] apscheduler.scheduler: Added job "_backup_job" to job store "default"
+2026-05-14 09:14:48,200 [INFO] apscheduler.scheduler: Added job "_check_late_shift" to job store "default"
+2026-05-14 09:14:48,200 [INFO] apscheduler.scheduler: Scheduler started
+2026-05-14 09:14:48,200 [INFO] washcontrol.scheduler: Планировщик задач запущен
+2026-05-14 09:14:48,200 [INFO] washcontrol: API доступен на http://127.0.0.1:8765
+2026-05-14 09:14:48,201 [INFO] washcontrol: WashControl готов к работе ✓
+2026-05-14 09:39:00,046 [INFO] washcontrol: WashControl запускается...
+2026-05-14 09:39:00,047 [INFO] washcontrol: База данных готова
+2026-05-14 09:39:00,047 [INFO] washcontrol.telegram: Telegram bot token не задан, бот не запускается
+2026-05-14 09:39:00,247 [INFO] apscheduler.scheduler: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-14 09:39:00,247 [INFO] apscheduler.scheduler: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-14 09:39:00,247 [INFO] apscheduler.scheduler: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-14 09:39:00,248 [INFO] apscheduler.scheduler: Added job "_daily_report_job" to job store "default"
+2026-05-14 09:39:00,259 [INFO] apscheduler.scheduler: Added job "_backup_job" to job store "default"
+2026-05-14 09:39:00,259 [INFO] apscheduler.scheduler: Added job "_check_late_shift" to job store "default"
+2026-05-14 09:39:00,259 [INFO] apscheduler.scheduler: Scheduler started
+2026-05-14 09:39:00,259 [INFO] washcontrol.scheduler: Планировщик задач запущен
+2026-05-14 09:39:00,259 [INFO] washcontrol: API доступен на http://127.0.0.1:8765
+2026-05-14 09:39:00,260 [INFO] washcontrol: WashControl готов к работе ✓
+2026-05-14 09:39:00,261 [INFO] washcontrol: WashControl останавливается...
+2026-05-14 09:39:00,261 [INFO] apscheduler.scheduler: Scheduler has been shut down
+2026-05-14 09:39:00,261 [INFO] washcontrol.scheduler: Планировщик остановлен
+2026-05-14 09:39:00,261 [INFO] washcontrol: WashControl остановлен
+2026-05-14 10:07:10,839 [INFO] httpx: HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2026-05-14 10:07:54,223 [INFO] httpx: HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2026-05-14 10:07:58,685 [INFO] httpx: HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2026-05-14 10:08:12,045 [INFO] httpx: HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2026-05-14 10:08:17,982 [INFO] httpx: HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2026-05-14 10:16:36,802 [INFO] httpx: HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2026-05-14 10:16:36,803 [INFO] httpx: HTTP Request: POST http://testserver/login "HTTP/1.1 404 Not Found"
+2026-05-14 10:16:36,805 [INFO] httpx: HTTP Request: POST http://testserver/users/register "HTTP/1.1 404 Not Found"
+2026-05-14 10:16:36,819 [INFO] httpx: HTTP Request: POST http://testserver/login "HTTP/1.1 404 Not Found"
+2026-05-14 10:16:36,821 [INFO] httpx: HTTP Request: POST http://testserver/backup/create "HTTP/1.1 401 Unauthorized"
+2026-05-14 10:16:36,840 [INFO] httpx: HTTP Request: GET http://testserver/backup/list "HTTP/1.1 401 Unauthorized"
+2026-05-14 10:17:43,840 [INFO] httpx: HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2026-05-14 10:17:43,842 [INFO] httpx: HTTP Request: POST http://testserver/login "HTTP/1.1 404 Not Found"
+2026-05-14 10:17:43,844 [INFO] httpx: HTTP Request: POST http://testserver/users/register "HTTP/1.1 404 Not Found"
+2026-05-14 10:17:43,860 [INFO] httpx: HTTP Request: POST http://testserver/login "HTTP/1.1 404 Not Found"
+2026-05-14 10:17:43,861 [INFO] httpx: HTTP Request: POST http://testserver/backup/create "HTTP/1.1 401 Unauthorized"
+2026-05-14 10:17:43,879 [INFO] httpx: HTTP Request: GET http://testserver/backup/list "HTTP/1.1 401 Unauthorized"
+2026-05-14 10:17:52,104 [INFO] httpx: HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2026-05-14 10:35:32,319 [INFO] httpx: HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"

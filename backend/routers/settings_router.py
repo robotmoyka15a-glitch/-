@@ -3,7 +3,7 @@ WashControl — роутер настроек
 Чтение и запись всех параметров приложения
 """
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from backend.database import get_connection, get_all_settings, set_setting
@@ -79,3 +79,84 @@ def list_backups(current_user: dict = Depends(require_admin)):
         }
         for f in files
     ]
+
+
+@router.post("/backup/restore")
+def restore_backup(body: dict, current_user: dict = Depends(require_admin)):
+    """Восстановить базу данных из резервной копии."""
+    import shutil
+    from backend.config import DB_PATH, BACKUP_DIR
+    
+    filename = body.get("filename")
+    if not filename:
+        raise HTTPException(status_code=400, detail="Не указано имя файла бэкапа")
+    
+    backup_path = BACKUP_DIR / filename
+    if not backup_path.exists():
+        raise HTTPException(status_code=404, detail=f"Бэкап {filename} не найден")
+    
+    # Создаём временную копию текущей БД
+    temp_backup = DB_PATH.with_suffix(DB_PATH.suffix + ".restore_temp")
+    if DB_PATH.exists():
+        shutil.copy2(str(DB_PATH), str(temp_backup))
+    
+    try:
+        # Копируем бэкап поверх текущей БД
+        shutil.copy2(str(backup_path), str(DB_PATH))
+        
+        # Удаляем WAL и SHM файлы чтобы избежать конфликтов
+        wal_file = DB_PATH.with_suffix(DB_PATH.suffix + "-wal")
+        shm_file = DB_PATH.with_suffix(DB_PATH.suffix + "-shm")
+        if wal_file.exists():
+            wal_file.unlink()
+        if shm_file.exists():
+            shm_file.unlink()
+        
+        # Удаляем временную копию
+        if temp_backup.exists():
+            temp_backup.unlink()
+        
+        return {"ok": True, "message": f"База данных восстановлена из {filename}. Требуется перезапуск сервиса."}
+    except Exception as e:
+        # Пытаемся откатить изменения при ошибке
+        if temp_backup.exists():
+            try:
+                shutil.copy2(str(temp_backup), str(DB_PATH))
+                temp_backup.unlink()
+            except Exception:
+                pass
+        raise HTTPException(status_code=500, detail=f"Ошибка восстановления: {e}")
+
+
+@router.delete("/backup/delete/{filename}")
+def delete_backup(filename: str, current_user: dict = Depends(require_admin)):
+    """Удалить указанную резервную копию."""
+    from backend.config import BACKUP_DIR
+    from backend.routers.backups import list_backups as get_backups_list
+    
+    backup_path = BACKUP_DIR / filename
+    if not backup_path.exists():
+        raise HTTPException(status_code=404, detail=f"Бэкап {filename} не найден")
+    
+    # Проверяем что это не последняя копия
+    backups = get_backups_list()
+    if len(backups) <= 1:
+        raise HTTPException(status_code=400, detail="Нельзя удалить единственную резервную копию")
+    
+    latest_backup = next((b for b in backups if b.get('filename') == filename), None)
+    if latest_backup:
+        raise HTTPException(status_code=400, detail="Нельзя удалить последнюю резервную копию")
+    
+    try:
+        backup_path.unlink()
+        # Также удаляем WAL и SHM файлы если есть
+        wal_file = backup_path.with_suffix(backup_path.suffix + "-wal")
+        shm_file = backup_path.with_suffix(backup_path.suffix + "-shm")
+        if wal_file.exists():
+            wal_file.unlink()
+        if shm_file.exists():
+            shm_file.unlink()
+        
+        return {"ok": True, "message": f"Бэкап {filename} удалён"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ошибка удаления: {e}")

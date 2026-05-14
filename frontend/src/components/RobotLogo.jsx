@@ -1,33 +1,49 @@
 import React from 'react'
 
-export default function RobotLogo({ size = 32, showText = true }) {
+export default function RobotLogo({ size = 40, showText = true }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      {/* Water drop logo with modern design */}
       <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
-        {/* Щит */}
-        <path d="M32 4 L56 16 L56 36 Q56 52 32 60 Q8 52 8 36 L8 16 Z"
-              fill="#111827" stroke="#22c55e" strokeWidth="2"/>
-        {/* Машина силуэт */}
-        <rect x="16" y="34" width="32" height="10" rx="3" fill="#22c55e"/>
-        <rect x="20" y="26" width="24" height="12" rx="3" fill="#22c55e"/>
-        <circle cx="21" cy="44" r="4" fill="#0a0f0d" stroke="#22c55e" strokeWidth="1.5"/>
-        <circle cx="43" cy="44" r="4" fill="#0a0f0d" stroke="#22c55e" strokeWidth="1.5"/>
-        {/* Искры */}
-        <path d="M26 14 L28 20 L32 18 L30 24 L34 22" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round"/>
-        <circle cx="38" cy="15" r="1.5" fill="#22c55e"/>
-        <circle cx="42" cy="20" r="1" fill="#22c55e"/>
+        {/* Main water drop */}
+        <path 
+          d="M32 4 C32 4 12 28 12 42 C12 53.046 20.954 62 32 62 C43.046 62 52 53.046 52 42 C52 28 32 4 32 4Z" 
+          fill="#3b82f6" 
+          stroke="#60a5fa" 
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {/* Inner highlight */}
+        <ellipse cx="26" cy="38" rx="6" ry="8" fill="rgba(255,255,255,0.3)"/>
+        {/* Small bubble */}
+        <circle cx="38" cy="48" r="3" fill="rgba(255,255,255,0.4)"/>
+        {/* Sparkle */}
+        <circle cx="22" cy="32" r="2" fill="rgba(255,255,255,0.6)"/>
       </svg>
       {showText && (
-        <span style={{
-          fontWeight: 800,
-          fontSize: size * 0.45,
-          color: '#22c55e',
-          letterSpacing: 1,
-          textTransform: 'uppercase',
-          fontFamily: "'Segoe UI', sans-serif",
-        }}>
-          Робот-Мойка
-        </span>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <span style={{
+            fontWeight: 700,
+            fontSize: Math.max(18, size * 0.45),
+            color: '#f8fafc',
+            letterSpacing: 0.5,
+            fontFamily: "'Inter', system-ui, sans-serif",
+          }}>
+            Wash<span style={{ color: '#3b82f6' }}>Control</span>
+          </span>
+          {size >= 40 && (
+            <span style={{
+              fontSize: 9,
+              color: '#94a3b8',
+              letterSpacing: 1,
+              textTransform: 'uppercase',
+              fontFamily: "'Inter', system-ui, sans-serif",
+            }}>
+              Система управления автомойкой
+            </span>
+          )}
+        </div>
       )}
     </div>
   )

@@ -4,16 +4,16 @@ import { settingsAPI } from '../api'
 import RobotLogo from '../components/RobotLogo'
 
 const C = {
-  BRAND_GREEN:      '#22c55e',
-  BRAND_GREEN_DARK: '#16a34a',
-  BRAND_GREEN_DIM:  '#14532d',
-  BG_BASE:          '#0a0f0d',
-  BG_CARD:          '#111827',
-  BG_SIDEBAR:       '#0d1a12',
-  BORDER:           '#1a3a25',
-  TEXT_PRIMARY:     '#f0fdf4',
-  TEXT_SECONDARY:   '#86efac',
-  TEXT_MUTED:       '#4b7a5c',
+  BRAND_GREEN:      '#3b82f6',
+  BRAND_GREEN_DARK: '#1e3a5f',
+  BRAND_GREEN_DIM:  'rgba(59,130,246,0.1)',
+  BG_BASE:          '#0f172a',
+  BG_CARD:          '#1e293b',
+  BG_SIDEBAR:       '#0f172a',
+  BORDER:           '#334155',
+  TEXT_PRIMARY:     '#f8fafc',
+  TEXT_SECONDARY:   '#94a3b8',
+  TEXT_MUTED:       '#64748b',
   ACCENT_YELLOW:    '#fbbf24',
   ACCENT_RED:       '#ef4444',
 }
@@ -455,7 +455,7 @@ const s = {
     borderRadius: 8, padding: '12px 14px',
   },
   code: {
-    background: '#0a0f0d', border: `1px solid ${C.BORDER}`,
+    background: '#0f172a', border: `1px solid ${C.BORDER}`,
     borderRadius: 4, padding: '1px 5px', fontSize: 11,
     color: C.BRAND_GREEN, fontFamily: 'monospace',
   },

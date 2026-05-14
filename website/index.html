@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WashControl — Система управления автомойкой</title>
+    <style>
+        :root {
+            --primary: #22c55e;
+            --primary-dark: #16a34a;
+            --dark: #0f172a;
+            --darker: #020617;
+            --light: #f8fafc;
+            --gray: #64748b;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--dark);
+            color: var(--light);
+            line-height: 1.6;
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+            padding: 20px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid #1e293b;
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+        
+        .nav-links a {
+            color: var(--light);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover { color: var(--primary); }
+        
+        /* Hero */
+        .hero {
+            padding: 160px 0 100px;
+            text-align: center;
+            background: linear-gradient(180deg, var(--dark) 0%, var(--darker) 100%);
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--primary) 0%, #34d399 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero p {
+            font-size: 1.3rem;
+            color: var(--gray);
+            max-width: 700px;
+            margin: 0 auto 40px;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 15px 35px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: var(--light);
+            border: 2px solid var(--gray);
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        /* Features */
+        .features {
+            padding: 100px 0;
+            background: var(--darker);
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 60px;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .feature-card {
+            background: var(--dark);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid #1e293b;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+        
+        .feature-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: var(--light);
+        }
+        
+        .feature-card p {
+            color: var(--gray);
+        }
+        
+        /* Screenshots */
+        .screenshots {
+            padding: 100px 0;
+            background: var(--dark);
+        }
+        
+        .screenshot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+        }
+        
+        .screenshot-card {
+            background: var(--darker);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid #1e293b;
+        }
+        
+        .screenshot-placeholder {
+            height: 250px;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray);
+            font-size: 1.2rem;
+        }
+        
+        .screenshot-card h3 {
+            padding: 20px;
+            font-size: 1.2rem;
+        }
+        
+        /* Pricing */
+        .pricing {
+            padding: 100px 0;
+            background: var(--darker);
+        }
+        
+        .pricing-card {
+            max-width: 500px;
+            margin: 0 auto;
+            background: var(--dark);
+            padding: 50px;
+            border-radius: 20px;
+            text-align: center;
+            border: 2px solid var(--primary);
+        }
+        
+        .price {
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 20px 0;
+        }
+        
+        .price span {
+            font-size: 1rem;
+            color: var(--gray);
+        }
+        
+        .pricing-features {
+            list-style: none;
+            margin: 30px 0;
+            text-align: left;
+        }
+        
+        .pricing-features li {
+            padding: 10px 0;
+            border-bottom: 1px solid #1e293b;
+        }
+        
+        .pricing-features li:before {
+            content: "✓";
+            color: var(--primary);
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        
+        /* FAQ */
+        .faq {
+            padding: 100px 0;
+            background: var(--dark);
+        }
+        
+        .faq-item {
+            max-width: 800px;
+            margin: 0 auto 20px;
+            background: var(--darker);
+            padding: 25px;
+            border-radius: 10px;
+            border: 1px solid #1e293b;
+        }
+        
+        .faq-item h3 {
+            margin-bottom: 10px;
+            color: var(--light);
+        }
+        
+        .faq-item p {
+            color: var(--gray);
+        }
+        
+        /* Footer */
+        footer {
+            padding: 50px 0;
+            background: var(--darker);
+            border-top: 1px solid #1e293b;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+        
+        .footer-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+        
+        .footer-links a {
+            color: var(--gray);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .footer-links a:hover { color: var(--primary); }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.5rem; }
+            .hero p { font-size: 1.1rem; }
+            .nav-links { display: none; }
+            .screenshot-grid { grid-template-columns: 1fr; }
+            .footer-content { flex-direction: column; text-align: center; }
+            .footer-links { flex-direction: column; gap: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <nav>
+                <a href="#" class="logo">🚿 WashControl</a>
+                <ul class="nav-links">
+                    <li><a href="#features">Возможности</a></li>
+                    <li><a href="#screenshots">Интерфейс</a></li>
+                    <li><a href="#pricing">Стоимость</a></li>
+                    <li><a href="#faq">FAQ</a></li>
+                    <li><a href="#download">Скачать</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>Система управления автомойкой</h1>
+            <p>
+                Локальная платформа для учёта сотрудников, журнала машин, отчётов, 
+                Telegram-бота, VK-уведомлений, камер TRASSIR и AI-помощника.
+            </p>
+            <div class="cta-buttons">
+                <a href="#download" class="btn btn-primary">Скачать бесплатно</a>
+                <a href="#features" class="btn btn-secondary">Узнать больше</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">Возможности системы</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">👤</div>
+                    <h3>Учёт сотрудников</h3>
+                    <p>Открытие/закрытие смены, контроль опозданий, история работы каждого оператора.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🚗</div>
+                    <h3>Журнал машин</h3>
+                    <p>Быстрое добавление автомобилей, выбор режима мойки, учёт оплаты и доп. услуг.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Отчёты и Excel</h3>
+                    <p>Дневные, недельные, месячные отчёты с графиками и экспортом в Excel.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>Telegram-бот</h3>
+                    <p>Уведомления о начале/конце смены, ответы на вопросы, статистика дня.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔵</div>
+                    <h3>VK уведомления</h3>
+                    <p>Автоматическая публикация итогов смены в группу и личные сообщения.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📷</div>
+                    <h3>Камеры TRASSIR</h3>
+                    <p>Интеграция с системой видеонаблюдения, скриншоты по запросу.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧠</div>
+                    <h3>AI-помощник</h3>
+                    <p>Локальная нейросеть для ответов на вопросы и анализа данных.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💾</div>
+                    <h3>Бэкапы</h3>
+                    <p>Автоматическое резервное копирование базы данных каждую ночь.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Без интернета</h3>
+                    <p>Работает локально без обязательного облака. Полная конфиденциальность.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Screenshots -->
+    <section id="screenshots" class="screenshots">
+        <div class="container">
+            <h2 class="section-title">Интерфейс приложения</h2>
+            <div class="screenshot-grid">
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">📊 Главная панель</div>
+                    <h3>Главная — сводка дня</h3>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">🚗 Журнал машин</div>
+                    <h3>Машины — добавление и учёт</h3>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">📈 Графики и отчёты</div>
+                    <h3>Отчёты — аналитика</h3>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">⚙️ Настройки</div>
+                    <h3>Настройки — интеграции</h3>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section id="pricing" class="pricing">
+        <div class="container">
+            <h2 class="section-title">Стоимость</h2>
+            <div class="pricing-card">
+                <h3>WashControl</h3>
+                <div class="price">0 ₽ <span>/ навсегда</span></div>
+                <p style="color: var(--gray);">Полностью бесплатная система с открытым исходным кодом</p>
+                <ul class="pricing-features">
+                    <li>Неограниченное количество пользователей</li>
+                    <li>Все функции включены</li>
+                    <li>Telegram и VK интеграции</li>
+                    <li>Поддержка камер TRASSIR</li>
+                    <li>AI-помощник (локально)</li>
+                    <li>Автоматические бэкапы</li>
+                    <li>Экспорт в Excel</li>
+                    <li>Работа без интернета</li>
+                </ul>
+                <a href="#download" class="btn btn-primary" style="width: 100%;">Скачать сейчас</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq" class="faq">
+        <div class="container">
+            <h2 class="section-title">Частые вопросы</h2>
+            <div class="faq-item">
+                <h3>Можно ли работать без интернета?</h3>
+                <p>Да! Всё ядро системы работает локально. Telegram/VK не работают без интернета, но основной функционал доступен полностью.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Что будет если выключить ПК в середине смены?</h3>
+                <p>Смена останется открытой. При следующем включении всё продолжит работу. Данные не потеряются благодаря SQLite базе.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Как добавить второго оператора?</h3>
+                <p>Зайдите в раздел «Настройки → Пользователи», заполните форму и нажмите «Создать». Новый оператор сможет войти под своими данными.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Где хранится база данных?</h3>
+                <p>В папке data/washcontrol.db — это обычный SQLite-файл. Можно открыть любым SQLite-браузером для резервного копирования.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Нужен ли GPU для AI-помощника?</h3>
+                <p>Нет, AI работает на CPU. Требуется 4+ ГБ оперативной памяти. Модель Qwen2.5-3B-Instruct скачивается отдельно.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Download -->
+    <section id="download" class="features">
+        <div class="container">
+            <h2 class="section-title">Скачать WashControl</h2>
+            <div style="text-align: center; max-width: 600px; margin: 0 auto;">
+                <p style="color: var(--gray); margin-bottom: 30px; font-size: 1.1rem;">
+                    Выберите удобный способ установки:
+                </p>
+                <div style="display: flex; flex-direction: column; gap: 20px; align-items: center;">
+                    <div style="background: var(--dark); padding: 30px; border-radius: 15px; border: 1px solid #1e293b; width: 100%;">
+                        <h3 style="margin-bottom: 15px;">📦 Готовый инсталлятор (рекомендуется)</h3>
+                        <p style="color: var(--gray); margin-bottom: 20px;">
+                            Windows 10/11 • x64 • ~150 МБ<br>
+                            Включает всё необходимое для работы
+                        </p>
+                        <a href="#" class="btn btn-primary" style="width: 100%;">Скачать WashControl Setup 1.0.0.exe</a>
+                    </div>
+                    <div style="background: var(--dark); padding: 30px; border-radius: 15px; border: 1px solid #1e293b; width: 100%;">
+                        <h3 style="margin-bottom: 15px;">💻 Исходный код (для разработчиков)</h3>
+                        <p style="color: var(--gray); margin-bottom: 20px;">
+                            GitHub • Python 3.11+ • Node.js 18+<br>
+                            Требует самостоятельной сборки
+                        </p>
+                        <a href="https://github.com/yourusername/washcontrol" target="_blank" class="btn btn-secondary" style="width: 100%;">Перейти на GitHub</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div>
+                    <a href="#" class="logo" style="font-size: 1.2rem;">🚿 WashControl</a>
+                    <p style="color: var(--gray); margin-top: 10px;">v1.0.0 © 2025 Робот-Мойка</p>
+                </div>
+                <ul class="footer-links">
+                    <li><a href="#">Документация</a></li>
+                    <li><a href="https://github.com/yourusername/washcontrol" target="_blank">GitHub</a></li>
+                    <li><a href="#">Поддержка</a></li>
+                    <li><a href="#">Контакты</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

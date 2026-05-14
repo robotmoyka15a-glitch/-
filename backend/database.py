@@ -4,7 +4,7 @@ WashControl — схема базы данных SQLite
 """
 
 import sqlite3
-import hashlib
+import bcrypt
 import threading
 from datetime import datetime
 from pathlib import Path
@@ -44,7 +44,16 @@ def get_connection() -> sqlite3.Connection:
 
 
 def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+    """Хеширует пароль используя bcrypt с автоматической солью."""
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(rounds=12)).decode("utf-8")
+
+
+def verify_password(password: str, hashed: str) -> bool:
+    """Проверяет пароль против bcrypt хеша."""
+    try:
+        return bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))
+    except Exception:
+        return False
 
 
 def init_db():
@@ -188,18 +197,22 @@ def init_db():
         )
 
     # ── Дефолтные пользователи ────────────────────────────────────────────────
-    admin_pw = hash_password("admin123")
-    op_pw    = hash_password("operator1")
+    # Проверяем, есть ли уже пользователи (чтобы не пересоздавать при каждом старте)
+    existing_admin = cur.execute("SELECT id FROM users WHERE username = ?", ("admin",)).fetchone()
+    if not existing_admin:
+        admin_pw = hash_password("admin123")
+        cur.execute("""
+            INSERT INTO users (username, full_name, password, role)
+            VALUES (?, ?, ?, ?)
+        """, ("admin", "Администратор", admin_pw, "admin"))
 
-    cur.execute("""
-        INSERT OR IGNORE INTO users (username, full_name, password, role)
-        VALUES (?, ?, ?, ?)
-    """, ("admin", "Администратор", admin_pw, "admin"))
-
-    cur.execute("""
-        INSERT OR IGNORE INTO users (username, full_name, password, role)
-        VALUES (?, ?, ?, ?)
-    """, ("operator1", "Оператор 1", op_pw, "operator"))
+    existing_op = cur.execute("SELECT id FROM users WHERE username = ?", ("operator1",)).fetchone()
+    if not existing_op:
+        op_pw = hash_password("operator1")
+        cur.execute("""
+            INSERT INTO users (username, full_name, password, role)
+            VALUES (?, ?, ?, ?)
+        """, ("operator1", "Оператор 1", op_pw, "operator"))
 
     conn.commit()
     print(f"[DB] База данных инициализирована: {DB_PATH}")
